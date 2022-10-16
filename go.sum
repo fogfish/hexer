@@ -1,0 +1,9 @@
+github.com/fogfish/curie v1.7.2 h1:EfcwuURENgn3YzwYofka6+olLmsD7MYKrL6VZnu9AVY=
+github.com/fogfish/curie v1.7.2/go.mod h1:jPv7pg4hHd8Ug/USG29ZA2bAwlRfh/iinY90/30ATGg=
+github.com/fogfish/guid v1.1.0 h1:C2dk990rZ+irgUxTISYPlxuyNs323beVo0s4TzdYjzM=
+github.com/fogfish/guid v1.1.0/go.mod h1:+3wibLVsVGR+Vmfh2ufihadFcUKnD67cXG1QnOAyiag=
+github.com/fogfish/it v0.9.1 h1:Pu+qgqBV2ilZDzZzPIbUIhMIkdpHgbGUsdEwVQvBxNQ=
+github.com/fogfish/it/v2 v2.0.0-20220827053314-ff49ca642fd4 h1:QhBF5rj2dBXg0owbQdut8xdX6ylPrbvY8BuRIgu4/W8=
+github.com/fogfish/it/v2 v2.0.0-20220827053314-ff49ca642fd4/go.mod h1:h5FdKaEQT4sUEykiVkB8VV4jX27XabFVeWhoDZaRZtE=
+github.com/fogfish/skiplist v0.9.0 h1:IT8Sry/WL6dc4xThgjmAKtAai+PWctHw30VaZMn8xlc=
+github.com/fogfish/skiplist v0.9.0/go.mod h1:tda0SRPKXYyUIGVDrqsJwn6B18oOYmv1xrnQ+VKTHrc=
