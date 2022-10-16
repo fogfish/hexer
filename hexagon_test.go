@@ -124,6 +124,19 @@ func TestQuery(t *testing.T) {
 			Should(it.Seq(seq).Equal(fixture[8], fixture[9]))
 	})
 
+	t.Run("(s)ᴾ ⇒ ∅", func(t *testing.T) {
+		seq := toSeq(
+			hexagon.Query(store,
+				hexagon.IRI("ex:2"),
+				hexagon.Lt(curie.IRI("prop")),
+				hexagon.Lt[any]("a"),
+			),
+		)
+
+		it.Then(t).
+			Should(it.Seq(seq).BeEmpty())
+	})
+
 	t.Run("(s)º ⇒ p", func(t *testing.T) {
 		seq := toSeq(
 			hexagon.Query(store,
@@ -269,7 +282,7 @@ func BenchmarkXxx(b *testing.B) {
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		seq := hexagon.Query(store,
-			hexagon.IRI("ex:2"), nil, nil, //hexagon.Eq[any]("b"),
+			hexagon.IRI("ex:2"), nil, nil,
 		)
 		seq.FMap(func(i1, i2 curie.IRI, a any) error { return nil })
 	}
