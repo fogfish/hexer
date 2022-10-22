@@ -284,6 +284,6 @@ func BenchmarkXxx(b *testing.B) {
 		seq := hexagon.Query(store,
 			hexagon.IRI("ex:2"), nil, nil,
 		)
-		seq.FMap(func(i1, i2 curie.IRI, a any) error { return nil })
+		seq.FMap(func(s, p curie.IRI, o any) error { return nil })
 	}
 }
