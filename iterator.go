@@ -41,7 +41,7 @@ func (iter *iterator[T]) FMap(f func(curie.IRI, curie.IRI, any) error) error {
 	return nil
 }
 
-//
+// TODO: fix it
 type iterator2[B, A any] struct {
 	s   s
 	p   p
@@ -65,6 +65,7 @@ func (iter *iterator2[A, B]) Next() bool {
 		}
 		b, __a := iter._ba.Head()
 		*iter.b = b
+		// fmt.Printf("==> len os[p] %v\n", skiplist.Length(__a))
 		iter.__a = toIterator(iter.ap, __a)
 	}
 

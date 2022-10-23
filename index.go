@@ -1,6 +1,8 @@
 package hexagon
 
 import (
+	"math/rand"
+
 	"github.com/fogfish/curie"
 	"github.com/fogfish/guid"
 	"github.com/fogfish/hexagon/internal/ord"
@@ -30,20 +32,20 @@ type pos = *skiplist.SkipList[p, _os]
 type osp = *skiplist.SkipList[o, _sp]
 type ops = *skiplist.SkipList[o, _ps]
 
-func newS() __s { return skiplist.New[s, k](ord.IRI) }
-func newP() __p { return skiplist.New[p, k](ord.IRI) }
-func newO() __o { return skiplist.New[o, k](ord.Any) }
+func newS(rnd rand.Source) __s { return skiplist.New[s, k](ord.IRI, rnd) }
+func newP(rnd rand.Source) __p { return skiplist.New[p, k](ord.IRI, rnd) }
+func newO(rnd rand.Source) __o { return skiplist.New[o, k](ord.Any, rnd) }
 
-func newPO() _po { return skiplist.New[p, __o](ord.IRI) }
-func newOP() _op { return skiplist.New[o, __p](ord.Any) }
-func newSO() _so { return skiplist.New[s, __o](ord.IRI) }
-func newOS() _os { return skiplist.New[o, __s](ord.Any) }
-func newSP() _sp { return skiplist.New[s, __p](ord.IRI) }
-func newPS() _ps { return skiplist.New[p, __s](ord.IRI) }
+func newPO(rnd rand.Source) _po { return skiplist.New[p, __o](ord.IRI, rnd) }
+func newOP(rnd rand.Source) _op { return skiplist.New[o, __p](ord.Any, rnd) }
+func newSO(rnd rand.Source) _so { return skiplist.New[s, __o](ord.IRI, rnd) }
+func newOS(rnd rand.Source) _os { return skiplist.New[o, __s](ord.Any, rnd) }
+func newSP(rnd rand.Source) _sp { return skiplist.New[s, __p](ord.IRI, rnd) }
+func newPS(rnd rand.Source) _ps { return skiplist.New[p, __s](ord.IRI, rnd) }
 
-func newSPO() spo { return skiplist.New[s, _po](ord.IRI) }
-func newSOP() sop { return skiplist.New[s, _op](ord.IRI) }
-func newPSO() pso { return skiplist.New[p, _so](ord.IRI) }
-func newPOS() pos { return skiplist.New[p, _os](ord.IRI) }
-func newOSP() osp { return skiplist.New[o, _sp](ord.Any) }
-func newOPS() ops { return skiplist.New[o, _ps](ord.Any) }
+func newSPO(rnd rand.Source) spo { return skiplist.New[s, _po](ord.IRI, rnd) }
+func newSOP(rnd rand.Source) sop { return skiplist.New[s, _op](ord.IRI, rnd) }
+func newPSO(rnd rand.Source) pso { return skiplist.New[p, _so](ord.IRI, rnd) }
+func newPOS(rnd rand.Source) pos { return skiplist.New[p, _os](ord.IRI, rnd) }
+func newOSP(rnd rand.Source) osp { return skiplist.New[o, _sp](ord.Any, rnd) }
+func newOPS(rnd rand.Source) ops { return skiplist.New[o, _ps](ord.Any, rnd) }

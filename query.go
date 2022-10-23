@@ -337,6 +337,7 @@ func (q pattern) oSP() Iterator {
 	iter := &iterator2[s, p]{o: q.o.value, ap: q.p}
 
 	if _sp, has := skiplist.Lookup(q.store.osp, q.o.value); has {
+		// fmt.Printf("==> len o[sp] %v\n", skiplist.Length(_sp))
 		iter.a = &iter.p
 		iter.b = &iter.s
 		iter._ba = toIterator(q.s, _sp)

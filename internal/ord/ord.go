@@ -51,6 +51,20 @@ func (ord tAny) Compare(a, b any) int {
 	switch av := a.(type) {
 	case string:
 		return compareIt(reflect.String, av, b)
+	case bool:
+		if bv, ok := b.(bool); ok {
+			if av == bv {
+				return 0
+			}
+
+			if !av && bv {
+				return -1
+			}
+
+			return 1
+		} else {
+			return compare(reflect.Bool, typeOf(b))
+		}
 	case int:
 		return compareIt(reflect.Int, av, b)
 	case int8:
@@ -76,11 +90,7 @@ func (ord tAny) Compare(a, b any) int {
 	case float64:
 		return compareIt(reflect.Float64, av, b)
 	case curie.IRI:
-		if bv, ok := b.(curie.IRI); ok {
-			return compare(av, bv)
-		} else {
-			return 1
-		}
+		return compareIt(reflect.Kind(1000), av, b)
 	case []byte:
 		if bv, ok := b.([]byte); ok {
 			return compare(string(av), string(bv))
@@ -98,6 +108,8 @@ func typeOf(x any) reflect.Kind {
 	switch x.(type) {
 	case string:
 		return reflect.String
+	case bool:
+		return reflect.Bool
 	case int:
 		return reflect.Int
 	case int8:
@@ -122,6 +134,10 @@ func typeOf(x any) reflect.Kind {
 		return reflect.Float32
 	case float64:
 		return reflect.Float64
+	case curie.IRI:
+		return reflect.Kind(1000)
+	case []byte:
+		return reflect.Kind(1001)
 	default:
 		return reflect.Invalid
 	}
