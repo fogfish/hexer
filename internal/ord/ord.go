@@ -48,10 +48,6 @@ func (tLID) Compare(a, b guid.LID) int {
 
 var _ ord.Ord[guid.LID] = tLID("")
 
-func x(a, b any) {
-	reflect.TypeOf(a).Kind()
-}
-
 //
 type tAny string
 
