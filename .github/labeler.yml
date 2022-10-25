@@ -1,0 +1,21 @@
+"[#] ci/cd":
+ - '.github/*'
+ - '.github/**/*'
+
+"[#] deps":
+ - 'go.mod'
+ - 'go.sum'
+
+"[#] doc":
+ - '*.md'
+ - 'doc/*'
+ - 'doc/**/*'
+ - 'examples/**/*'
+
+"[#] hexagon":
+ - '*.go'
+ - 'internal/**/*'
+
+"[#] codec":
+ - 'encoding/*'
+ - 'encoding/**/*'

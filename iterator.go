@@ -1,3 +1,11 @@
+//
+// Copyright (C) 2022 Dmitry Kolesnikov
+//
+// This file may be modified and distributed under the terms
+// of the MIT license.  See the LICENSE file for details.
+// https://github.com/fogfish/hexagon
+//
+
 package hexagon
 
 import (
@@ -5,16 +13,12 @@ import (
 	"github.com/fogfish/skiplist"
 )
 
-type Iterator interface {
-	Head() (curie.IRI, curie.IRI, any)
-	Next() bool
-	FMap(f func(curie.IRI, curie.IRI, any) error) error
-}
+/*
 
-// (1) -> head() (s|p|o) -> k
-// (2) -> head() (s|p|o) -> (1)
+iterator build stream of <s,p,o> iterating over single dimension
 
-//
+the pointer `a` holds address of the field s, p, o, depending on the config
+*/
 type iterator[A any] struct {
 	s   s
 	p   p
@@ -41,7 +45,10 @@ func (iter *iterator[T]) FMap(f func(curie.IRI, curie.IRI, any) error) error {
 	return nil
 }
 
-// TODO: fix it
+/*
+
+iterator2 build stream of <s,p,o> iterating over two dimension
+*/
 type iterator2[B, A any] struct {
 	s   s
 	p   p
@@ -65,7 +72,6 @@ func (iter *iterator2[A, B]) Next() bool {
 		}
 		b, __a := iter._ba.Head()
 		*iter.b = b
-		// fmt.Printf("==> len os[p] %v\n", skiplist.Length(__a))
 		iter.__a = toIterator(iter.ap, __a)
 	}
 
@@ -86,7 +92,10 @@ func (iter *iterator2[A, B]) FMap(f func(curie.IRI, curie.IRI, any) error) error
 	return nil
 }
 
-//
+/*
+
+iterator3 build stream of <s,p,o> iterating over three dimension
+*/
 type iterator3 struct {
 	s   s
 	p   p

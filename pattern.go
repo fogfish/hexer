@@ -1,3 +1,11 @@
+//
+// Copyright (C) 2022 Dmitry Kolesnikov
+//
+// This file may be modified and distributed under the terms
+// of the MIT license.  See the LICENSE file for details.
+// https://github.com/fogfish/hexagon
+//
+
 package hexagon
 
 import (
@@ -23,29 +31,44 @@ type Predicate[T any] struct {
 	other  T
 }
 
+//
+type iri string
+
+const IRI = iri("hexagon.iri")
+
 // Makes `equal` to IRI predicate
-func IRI(value string) *Predicate[curie.IRI] {
-	return &Predicate[curie.IRI]{clause: eq, value: curie.IRI(value)}
+func (iri) Eq(value curie.IRI) *Predicate[curie.IRI] {
+	return &Predicate[curie.IRI]{clause: eq, value: value}
+}
+
+// Makes `less than` IRI predicate
+func (iri) Lt(value curie.IRI) *Predicate[curie.IRI] {
+	return &Predicate[curie.IRI]{clause: lt, value: value}
+}
+
+// Makes `greater than` IRI predicate
+func (iri) Gt(value curie.IRI) *Predicate[curie.IRI] {
+	return &Predicate[curie.IRI]{clause: gt, value: value}
 }
 
 // Makes `equal to` value predicate
-func Eq[T any](value T) *Predicate[T] {
-	return &Predicate[T]{clause: eq, value: value}
+func Eq[T DataType](value T) *Predicate[o] {
+	return &Predicate[o]{clause: eq, value: value}
 }
 
 // Makes `less than` value predicate
-func Lt[T any](value T) *Predicate[T] {
-	return &Predicate[T]{clause: lt, value: value}
+func Lt[T DataType](value T) *Predicate[o] {
+	return &Predicate[o]{clause: lt, value: value}
 }
 
 // Makes `greater than` value predicate
-func Gt[T any](value T) *Predicate[T] {
-	return &Predicate[T]{clause: gt, value: value}
+func Gt[T DataType](value T) *Predicate[o] {
+	return &Predicate[o]{clause: gt, value: value}
 }
 
 // Makes `in range` predicate
-func In[T any](from, to T) *Predicate[T] {
-	return &Predicate[T]{clause: in, value: from, other: to}
+func In[T DataType](from, to T) *Predicate[o] {
+	return &Predicate[o]{clause: in, value: from, other: to}
 }
 
 // checks if predicate is exact match
@@ -144,7 +167,7 @@ type pattern struct {
 }
 
 // evaluates pattern
-func (q pattern) eval() (Strategy, Iterator) {
+func (q pattern) eval() (Strategy, Stream) {
 	strategy := q.strategy()
 	switch strategy {
 	// x, o, _ ⇒ spo
@@ -215,7 +238,6 @@ _, _, x ⇒ osp
 
 _, _, _ ⇒ spo
 */
-
 func (q pattern) strategy() Strategy {
 	switch {
 	// x, o, _ ⇒ spo
@@ -266,14 +288,14 @@ func (q pattern) strategy() Strategy {
 }
 
 // ∅ ⇒ spo
-func (q pattern) spo() Iterator {
+func (q pattern) spo() Stream {
 	iter := &iterator3{spo: skiplist.Values(q.store.spo)}
 
 	return iter
 }
 
 // (s)ᴾ ⇒ o
-func (q pattern) sPO() Iterator {
+func (q pattern) sPO() Stream {
 	iter := &iterator2[p, o]{s: q.s.value, ap: q.o}
 
 	if _po, has := skiplist.Lookup(q.store.spo, q.s.value); has {
@@ -288,7 +310,7 @@ func (q pattern) sPO() Iterator {
 }
 
 // (s)º ⇒ p
-func (q pattern) sOP() Iterator {
+func (q pattern) sOP() Stream {
 	iter := &iterator2[o, p]{s: q.s.value, ap: q.p}
 
 	if _op, has := skiplist.Lookup(q.store.sop, q.s.value); has {
@@ -303,7 +325,7 @@ func (q pattern) sOP() Iterator {
 }
 
 // (p)ˢ ⇒ o
-func (q pattern) pSO() Iterator {
+func (q pattern) pSO() Stream {
 	iter := &iterator2[s, o]{p: q.p.value, ap: q.o}
 
 	if _so, has := skiplist.Lookup(q.store.pso, q.p.value); has {
@@ -318,7 +340,7 @@ func (q pattern) pSO() Iterator {
 }
 
 // (p)º ⇒ s
-func (q pattern) pOS() Iterator {
+func (q pattern) pOS() Stream {
 	iter := &iterator2[o, s]{p: q.p.value, ap: q.s}
 
 	if _os, has := skiplist.Lookup(q.store.pos, q.p.value); has {
@@ -333,7 +355,7 @@ func (q pattern) pOS() Iterator {
 }
 
 // (o)ˢ ⇒ p
-func (q pattern) oSP() Iterator {
+func (q pattern) oSP() Stream {
 	iter := &iterator2[s, p]{o: q.o.value, ap: q.p}
 
 	if _sp, has := skiplist.Lookup(q.store.osp, q.o.value); has {
@@ -349,7 +371,7 @@ func (q pattern) oSP() Iterator {
 }
 
 // (o)ᴾ ⇒ s
-func (q pattern) oPS() Iterator {
+func (q pattern) oPS() Stream {
 	iter := &iterator2[p, s]{o: q.o.value, ap: q.s}
 
 	if _ps, has := skiplist.Lookup(q.store.ops, q.o.value); has {
@@ -364,7 +386,7 @@ func (q pattern) oPS() Iterator {
 }
 
 // (sp) ⇒ o
-func (q pattern) spO() Iterator {
+func (q pattern) spO() Stream {
 	iter := &iterator[o]{s: q.s.value, p: q.p.value}
 
 	if _po, has := skiplist.Lookup(q.store.spo, q.s.value); has {
@@ -380,7 +402,7 @@ func (q pattern) spO() Iterator {
 }
 
 // (po) ⇒ s
-func (q pattern) poS() Iterator {
+func (q pattern) poS() Stream {
 	iter := &iterator[s]{p: q.p.value, o: q.o.value}
 
 	if _os, has := skiplist.Lookup(q.store.pos, q.p.value); has {
@@ -396,7 +418,7 @@ func (q pattern) poS() Iterator {
 }
 
 // (so) ⇒ p
-func (q pattern) soP() Iterator {
+func (q pattern) soP() Stream {
 	iter := &iterator[p]{s: q.s.value, o: q.o.value}
 
 	if _op, has := skiplist.Lookup(q.store.sop, q.s.value); has {

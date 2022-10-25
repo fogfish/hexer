@@ -1,3 +1,11 @@
+//
+// Copyright (C) 2022 Dmitry Kolesnikov
+//
+// This file may be modified and distributed under the terms
+// of the MIT license.  See the LICENSE file for details.
+// https://github.com/fogfish/hexagon
+//
+
 package jsonld
 
 import (
@@ -150,8 +158,7 @@ func decodeObjectProperties(store *hexagon.Store, s curie.IRI, obj Node) error {
 func decodeNodeObject(store *hexagon.Store, s, p curie.IRI, node Node) error {
 	val, has := node["@value"]
 	if has {
-		hexagon.Put(store, s, p, val)
-		return nil
+		return decodeValue(store, s, p, val)
 	}
 
 	iri, has := decodeObjectID(node)
@@ -182,78 +189,17 @@ func decodeNodeArray(store *hexagon.Store, s, p curie.IRI, array []any) error {
 	return nil
 }
 
-//
-//
-//
-//
+func decodeValue(store *hexagon.Store, s, p curie.IRI, val any) error {
+	switch o := val.(type) {
+	case float64:
+		hexagon.Put(store, s, p, o)
+	case string:
+		hexagon.Put(store, s, p, o)
+	case bool:
+		hexagon.Put(store, s, p, o)
+	default:
+		return fmt.Errorf("json-ld value codec do not support %T (%v)", val, val)
+	}
 
-// func From(reader io.Reader, store *hexagon.Store) error {
-// 	var ld LinkedData
-
-// 	if err := json.NewDecoder(reader).Decode(&ld); err != nil {
-// 		return err
-// 	}
-
-// 	if ld.Graph != nil && len(ld.Graph) > 0 {
-// 		for _, item := range ld.Graph {
-// 			if err := decode(store, item); err != nil {
-// 				return err
-// 			}
-// 		}
-// 	}
-
-// 	return nil
-// }
-
-// func decodeIRI(node Node) (curie.IRI, bool) {
-// 	raw, has := node["@id"]
-// 	if !has {
-// 		return "", false
-// 	}
-
-// 	id, ok := raw.(string)
-// 	if !ok {
-// 		return "", false
-// 	}
-
-// 	return curie.IRI(id), true
-// }
-
-// func decodeNode(store *hexagon.Store, s curie.IRI, node Node) error {
-// 	for key, val := range node {
-// 		if key == "@id" {
-// 			continue
-// 		}
-// 		p := curie.IRI(key)
-
-// 		switch o := val.(type) {
-// 		case float64:
-// 			hexagon.Put(store, s, p, o)
-// 		case string:
-// 			hexagon.Put(store, s, p, o)
-// 		case bool:
-// 			hexagon.Put(store, s, p, o)
-// 		case Node:
-// 			if err := decodeNodeObject(store, s, p, o); err != nil {
-// 				return err
-// 			}
-// 		case []any:
-// 			if err := decodeNodeArray(store, s, p, o); err != nil {
-// 				return err
-// 			}
-// 		default:
-// 			return fmt.Errorf("json-ld node codec do not support %T (%v)", val, val)
-// 		}
-// 	}
-
-// 	return nil
-// }
-
-// func decode(store *hexagon.Store, item Node) error {
-// 	id, has := decodeIRI(item)
-// 	if !has {
-// 		id = curie.New("_:%s", guid.L.K(guid.Clock))
-// 	}
-
-// 	return decodeNode(store, id, item)
-// }
+	return nil
+}

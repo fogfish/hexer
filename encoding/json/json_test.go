@@ -1,3 +1,11 @@
+//
+// Copyright (C) 2022 Dmitry Kolesnikov
+//
+// This file may be modified and distributed under the terms
+// of the MIT license.  See the LICENSE file for details.
+// https://github.com/fogfish/hexagon
+//
+
 package json_test
 
 import (
@@ -15,7 +23,7 @@ func TestJsonUnmarshal(t *testing.T) {
 			"prop": "title"
 		}`
 
-		val, err := toNode(input, nil, hexagon.IRI("prop"), nil)
+		val, err := toNode(input, nil, hexagon.IRI.Eq("prop"), nil)
 
 		it.Then(t).
 			Should(it.Nil(err)).
@@ -28,7 +36,7 @@ func TestJsonUnmarshal(t *testing.T) {
 			"prop": "title"
 		}`
 
-		val, err := toNode(input, hexagon.IRI("id"), nil, nil)
+		val, err := toNode(input, hexagon.IRI.Eq("id"), nil, nil)
 
 		it.Then(t).
 			Should(it.Nil(err)).
@@ -40,7 +48,7 @@ func TestJsonUnmarshal(t *testing.T) {
 			"prop": 10
 		}`
 
-		val, err := toNode(input, nil, hexagon.IRI("prop"), nil)
+		val, err := toNode(input, nil, hexagon.IRI.Eq("prop"), nil)
 
 		it.Then(t).
 			Should(it.Nil(err)).
@@ -52,7 +60,7 @@ func TestJsonUnmarshal(t *testing.T) {
 			"prop": 10.0
 		}`
 
-		val, err := toNode(input, nil, hexagon.IRI("prop"), nil)
+		val, err := toNode(input, nil, hexagon.IRI.Eq("prop"), nil)
 
 		it.Then(t).
 			Should(it.Nil(err)).
@@ -64,7 +72,7 @@ func TestJsonUnmarshal(t *testing.T) {
 			"prop": true
 		}`
 
-		val, err := toNode(input, nil, hexagon.IRI("prop"), nil)
+		val, err := toNode(input, nil, hexagon.IRI.Eq("prop"), nil)
 
 		it.Then(t).
 			Should(it.Nil(err)).
@@ -76,7 +84,7 @@ func TestJsonUnmarshal(t *testing.T) {
 			"prop": ["a", "b", "c"]
 		}`
 
-		val, err := toNode(input, nil, hexagon.IRI("prop"), nil)
+		val, err := toNode(input, nil, hexagon.IRI.Eq("prop"), nil)
 
 		it.Then(t).
 			Should(it.Nil(err)).
@@ -88,7 +96,7 @@ func TestJsonUnmarshal(t *testing.T) {
 			"prop": [1, "b", true]
 		}`
 
-		val, err := toNode(input, nil, hexagon.IRI("prop"), nil)
+		val, err := toNode(input, nil, hexagon.IRI.Eq("prop"), nil)
 
 		it.Then(t).
 			Should(it.Nil(err)).
@@ -101,7 +109,7 @@ func TestJsonUnmarshal(t *testing.T) {
 			{"@id": "id", "porp": "b"}
 		]`
 
-		val, err := toNode(input, hexagon.IRI("id"), nil, nil)
+		val, err := toNode(input, hexagon.IRI.Eq("id"), nil, nil)
 
 		it.Then(t).
 			Should(it.Nil(err)).
@@ -116,13 +124,13 @@ func TestJsonUnmarshal(t *testing.T) {
 			"porp": {"@id": "c", "prop": "title"}
 		}`
 
-		val, err := toNode(input, hexagon.IRI("a"), nil, nil)
+		val, err := toNode(input, hexagon.IRI.Eq("a"), nil, nil)
 		it.Then(t).
 			Should(it.Nil(err)).
 			Should(it.Map(val).Have("prop", curie.IRI("b"))).
 			Should(it.Map(val).Have("porp", curie.IRI("c")))
 
-		val, err = toNode(input, hexagon.IRI("b"), nil, nil)
+		val, err = toNode(input, hexagon.IRI.Eq("b"), nil, nil)
 		it.Then(t).
 			Should(it.Nil(err)).
 			Should(it.Map(val).Have("prop", "title"))
@@ -138,15 +146,15 @@ func TestJsonUnmarshal(t *testing.T) {
 type moldIRI = *hexagon.Predicate[curie.IRI]
 type moldAny = *hexagon.Predicate[any]
 
-func toNode(input string, s moldIRI, p moldIRI, o moldAny) (hexagon.Node, error) {
-	node := hexagon.Node{}
+func toNode(input string, s moldIRI, p moldIRI, o moldAny) (hexagon.Entity, error) {
+	node := hexagon.Entity{}
 	store := hexagon.New()
 
 	if err := json.Unmarshal([]byte(input), store); err != nil {
 		return nil, err
 	}
 
-	if err := hexagon.Query(store, s, p, o).FMap(node.Append); err != nil {
+	if err := hexagon.Match(store, s, p, o).FMap(node.Append); err != nil {
 		return nil, err
 	}
 

@@ -1,9 +1,16 @@
+//
+// Copyright (C) 2022 Dmitry Kolesnikov
+//
+// This file may be modified and distributed under the terms
+// of the MIT license.  See the LICENSE file for details.
+// https://github.com/fogfish/hexagon
+//
+
 package hexagon
 
 import (
 	"testing"
 
-	"github.com/fogfish/curie"
 	"github.com/fogfish/it/v2"
 )
 
@@ -25,7 +32,7 @@ func TestQuery(t *testing.T) {
 	t.Run("(s) ⇒ po", func(t *testing.T) {
 		p := pattern{
 			store: store,
-			s:     Eq(curie.IRI("some")),
+			s:     IRI.Eq("some"),
 		}
 		strategy, iter := p.eval()
 
@@ -38,7 +45,7 @@ func TestQuery(t *testing.T) {
 	t.Run("(p) ⇒ so", func(t *testing.T) {
 		p := pattern{
 			store: store,
-			p:     Eq(curie.IRI("some")),
+			p:     IRI.Eq("some"),
 		}
 		strategy, iter := p.eval()
 
@@ -51,7 +58,7 @@ func TestQuery(t *testing.T) {
 	t.Run("(o) ⇒ sp", func(t *testing.T) {
 		p := pattern{
 			store: store,
-			o:     Eq[any]("some"),
+			o:     Eq("some"),
 		}
 		strategy, iter := p.eval()
 
@@ -64,8 +71,8 @@ func TestQuery(t *testing.T) {
 	t.Run("(s)ᴾ ⇒ o", func(t *testing.T) {
 		p := pattern{
 			store: store,
-			s:     Eq(curie.IRI("some")),
-			p:     Lt(curie.IRI("some")),
+			s:     IRI.Eq("some"),
+			p:     IRI.Lt("some"),
 		}
 		strategy, iter := p.eval()
 
@@ -78,9 +85,9 @@ func TestQuery(t *testing.T) {
 	t.Run("(s)ᴾ ⇒ o", func(t *testing.T) {
 		p := pattern{
 			store: store,
-			s:     Eq(curie.IRI("some")),
-			p:     Lt(curie.IRI("some")),
-			o:     Lt[any]("some"),
+			s:     IRI.Eq("some"),
+			p:     IRI.Lt("some"),
+			o:     Lt("some"),
 		}
 		strategy, iter := p.eval()
 
@@ -93,8 +100,8 @@ func TestQuery(t *testing.T) {
 	t.Run("(s)º ⇒ p", func(t *testing.T) {
 		p := pattern{
 			store: store,
-			s:     Eq(curie.IRI("some")),
-			o:     Lt[any]("some"),
+			s:     IRI.Eq("some"),
+			o:     Lt("some"),
 		}
 		strategy, iter := p.eval()
 
@@ -107,8 +114,8 @@ func TestQuery(t *testing.T) {
 	t.Run("(p)º ⇒ s", func(t *testing.T) {
 		p := pattern{
 			store: store,
-			p:     Eq(curie.IRI("some")),
-			o:     Lt[any]("some"),
+			p:     IRI.Eq("some"),
+			o:     Lt("some"),
 		}
 		strategy, iter := p.eval()
 
@@ -121,9 +128,9 @@ func TestQuery(t *testing.T) {
 	t.Run("(p)º ⇒ s", func(t *testing.T) {
 		p := pattern{
 			store: store,
-			p:     Eq(curie.IRI("some")),
-			o:     Lt[any]("some"),
-			s:     Lt(curie.IRI("some")),
+			p:     IRI.Eq("some"),
+			o:     Lt("some"),
+			s:     IRI.Lt("some"),
 		}
 		strategy, iter := p.eval()
 
@@ -136,8 +143,8 @@ func TestQuery(t *testing.T) {
 	t.Run("(p)ˢ ⇒ o", func(t *testing.T) {
 		p := pattern{
 			store: store,
-			p:     Eq(curie.IRI("some")),
-			s:     Lt(curie.IRI("some")),
+			p:     IRI.Eq("some"),
+			s:     IRI.Lt("some"),
 		}
 		strategy, iter := p.eval()
 
@@ -150,8 +157,8 @@ func TestQuery(t *testing.T) {
 	t.Run("(o)ˢ ⇒ p", func(t *testing.T) {
 		p := pattern{
 			store: store,
-			o:     Eq[any]("some"),
-			s:     Lt(curie.IRI("some")),
+			o:     Eq("some"),
+			s:     IRI.Lt("some"),
 		}
 		strategy, iter := p.eval()
 
@@ -164,9 +171,9 @@ func TestQuery(t *testing.T) {
 	t.Run("(o)ˢ ⇒ p", func(t *testing.T) {
 		p := pattern{
 			store: store,
-			o:     Eq[any]("some"),
-			s:     Lt(curie.IRI("some")),
-			p:     Lt(curie.IRI("some")),
+			o:     Eq("some"),
+			s:     IRI.Lt("some"),
+			p:     IRI.Lt("some"),
 		}
 		strategy, iter := p.eval()
 
@@ -179,8 +186,8 @@ func TestQuery(t *testing.T) {
 	t.Run("(o)ᴾ ⇒ s", func(t *testing.T) {
 		p := pattern{
 			store: store,
-			o:     Eq[any]("some"),
-			p:     Lt(curie.IRI("some")),
+			o:     Eq("some"),
+			p:     IRI.Lt("some"),
 		}
 		strategy, iter := p.eval()
 
@@ -193,9 +200,9 @@ func TestQuery(t *testing.T) {
 	t.Run("(sp) ⇒ o", func(t *testing.T) {
 		p := pattern{
 			store: store,
-			s:     Eq(curie.IRI("some")),
-			p:     Eq(curie.IRI("some")),
-			o:     Lt[any]("some"),
+			s:     IRI.Eq("some"),
+			p:     IRI.Eq("some"),
+			o:     Lt("some"),
 		}
 		strategy, iter := p.eval()
 
@@ -208,9 +215,9 @@ func TestQuery(t *testing.T) {
 	t.Run("(so) ⇒ p", func(t *testing.T) {
 		p := pattern{
 			store: store,
-			s:     Eq(curie.IRI("some")),
-			p:     Lt(curie.IRI("some")),
-			o:     Eq[any]("some"),
+			s:     IRI.Eq("some"),
+			p:     IRI.Lt("some"),
+			o:     Eq("some"),
 		}
 		strategy, iter := p.eval()
 
@@ -223,9 +230,9 @@ func TestQuery(t *testing.T) {
 	t.Run("(po) ⇒ s", func(t *testing.T) {
 		p := pattern{
 			store: store,
-			s:     Lt(curie.IRI("some")),
-			p:     Eq(curie.IRI("some")),
-			o:     Eq[any]("some"),
+			s:     IRI.Lt("some"),
+			p:     IRI.Eq("some"),
+			o:     Eq("some"),
 		}
 		strategy, iter := p.eval()
 

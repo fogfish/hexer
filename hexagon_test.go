@@ -6,13 +6,12 @@ import (
 	"github.com/fogfish/curie"
 	"github.com/fogfish/hexagon"
 	"github.com/fogfish/it/v2"
-	// "github.com/fogfish/hexagon"
 )
 
 type spo struct {
 	s curie.IRI
 	p curie.IRI
-	o any
+	o string
 }
 
 var fixture []spo = []spo{
@@ -37,10 +36,10 @@ var fixture []spo = []spo{
 	{"ex:2", "prop", "h"},
 }
 
-func toSeq(seq hexagon.Iterator) []spo {
+func toSeq(seq hexagon.Stream) []spo {
 	val := []spo{}
 	seq.FMap(func(s, p curie.IRI, o any) error {
-		val = append(val, spo{s: s, p: p, o: o})
+		val = append(val, spo{s: s, p: p, o: o.(string)})
 		return nil
 	})
 	return val
@@ -57,7 +56,7 @@ func TestQuery(t *testing.T) {
 
 	t.Run("∅ ⇒ spo", func(t *testing.T) {
 		seq := toSeq(
-			hexagon.Query(store,
+			hexagon.Match(store,
 				nil, nil, nil,
 			),
 		)
@@ -68,8 +67,8 @@ func TestQuery(t *testing.T) {
 
 	t.Run("(s) ⇒ po", func(t *testing.T) {
 		seq := toSeq(
-			hexagon.Query(store,
-				hexagon.IRI("ex:2"), nil, nil,
+			hexagon.Match(store,
+				hexagon.IRI.Eq("ex:2"), nil, nil,
 			),
 		)
 
@@ -79,8 +78,8 @@ func TestQuery(t *testing.T) {
 
 	t.Run("(p) ⇒ so", func(t *testing.T) {
 		seq := toSeq(
-			hexagon.Query(store,
-				nil, hexagon.IRI("prop"), nil,
+			hexagon.Match(store,
+				nil, hexagon.IRI.Eq("prop"), nil,
 			),
 		)
 
@@ -91,8 +90,8 @@ func TestQuery(t *testing.T) {
 
 	t.Run("(o) ⇒ sp", func(t *testing.T) {
 		seq := toSeq(
-			hexagon.Query(store,
-				nil, nil, hexagon.Eq[any]("b"),
+			hexagon.Match(store,
+				nil, nil, hexagon.Eq("b"),
 			),
 		)
 
@@ -102,8 +101,8 @@ func TestQuery(t *testing.T) {
 
 	t.Run("(s)ᴾ ⇒ o", func(t *testing.T) {
 		seq := toSeq(
-			hexagon.Query(store,
-				hexagon.IRI("ex:2"), hexagon.Lt(curie.IRI("prop")), nil,
+			hexagon.Match(store,
+				hexagon.IRI.Eq("ex:2"), hexagon.IRI.Lt("prop"), nil,
 			),
 		)
 
@@ -113,10 +112,10 @@ func TestQuery(t *testing.T) {
 
 	t.Run("(s)ᴾ ⇒ o", func(t *testing.T) {
 		seq := toSeq(
-			hexagon.Query(store,
-				hexagon.IRI("ex:2"),
-				hexagon.Lt(curie.IRI("prop")),
-				hexagon.Lt[any]("c"),
+			hexagon.Match(store,
+				hexagon.IRI.Eq("ex:2"),
+				hexagon.IRI.Lt("prop"),
+				hexagon.Lt("c"),
 			),
 		)
 
@@ -126,10 +125,10 @@ func TestQuery(t *testing.T) {
 
 	t.Run("(s)ᴾ ⇒ ∅", func(t *testing.T) {
 		seq := toSeq(
-			hexagon.Query(store,
-				hexagon.IRI("ex:2"),
-				hexagon.Lt(curie.IRI("prop")),
-				hexagon.Lt[any]("a"),
+			hexagon.Match(store,
+				hexagon.IRI.Eq("ex:2"),
+				hexagon.IRI.Lt("prop"),
+				hexagon.Lt("a"),
 			),
 		)
 
@@ -139,10 +138,10 @@ func TestQuery(t *testing.T) {
 
 	t.Run("(s)º ⇒ p", func(t *testing.T) {
 		seq := toSeq(
-			hexagon.Query(store,
-				hexagon.IRI("ex:2"),
+			hexagon.Match(store,
+				hexagon.IRI.Eq("ex:2"),
 				nil,
-				hexagon.Lt[any]("g"),
+				hexagon.Lt("g"),
 			),
 		)
 
@@ -152,10 +151,10 @@ func TestQuery(t *testing.T) {
 
 	t.Run("(p)º ⇒ s", func(t *testing.T) {
 		seq := toSeq(
-			hexagon.Query(store,
+			hexagon.Match(store,
 				nil,
-				hexagon.IRI("name"),
-				hexagon.Lt[any]("g"),
+				hexagon.IRI.Eq("name"),
+				hexagon.Lt("g"),
 			),
 		)
 
@@ -170,10 +169,10 @@ func TestQuery(t *testing.T) {
 
 	t.Run("(p)º ⇒ s", func(t *testing.T) {
 		seq := toSeq(
-			hexagon.Query(store,
-				hexagon.Lt(curie.IRI("ex:2")),
-				hexagon.IRI("name"),
-				hexagon.Lt[any]("g"),
+			hexagon.Match(store,
+				hexagon.IRI.Lt("ex:2"),
+				hexagon.IRI.Eq("name"),
+				hexagon.Lt("g"),
 			),
 		)
 
@@ -183,9 +182,9 @@ func TestQuery(t *testing.T) {
 
 	t.Run("(p)ˢ ⇒ o", func(t *testing.T) {
 		seq := toSeq(
-			hexagon.Query(store,
-				hexagon.Lt(curie.IRI("ex:2")),
-				hexagon.IRI("name"),
+			hexagon.Match(store,
+				hexagon.IRI.Lt("ex:2"),
+				hexagon.IRI.Eq("name"),
 				nil,
 			),
 		)
@@ -196,10 +195,10 @@ func TestQuery(t *testing.T) {
 
 	t.Run("(o)ˢ ⇒ p", func(t *testing.T) {
 		seq := toSeq(
-			hexagon.Query(store,
-				hexagon.Lt(curie.IRI("ex:2")),
+			hexagon.Match(store,
+				hexagon.IRI.Lt("ex:2"),
 				nil,
-				hexagon.Eq[any]("c"),
+				hexagon.Eq("c"),
 			),
 		)
 
@@ -209,10 +208,10 @@ func TestQuery(t *testing.T) {
 
 	t.Run("(o)ˢ ⇒ p", func(t *testing.T) {
 		seq := toSeq(
-			hexagon.Query(store,
-				hexagon.Lt(curie.IRI("ex:3")),
-				hexagon.Lt(curie.IRI("prop")),
-				hexagon.Eq[any]("c"),
+			hexagon.Match(store,
+				hexagon.IRI.Lt("ex:3"),
+				hexagon.IRI.Lt("prop"),
+				hexagon.Eq("c"),
 			),
 		)
 
@@ -222,10 +221,10 @@ func TestQuery(t *testing.T) {
 
 	t.Run("(o)ᴾ ⇒ s", func(t *testing.T) {
 		seq := toSeq(
-			hexagon.Query(store,
+			hexagon.Match(store,
 				nil,
-				hexagon.Lt(curie.IRI("prop")),
-				hexagon.Eq[any]("c"),
+				hexagon.IRI.Lt("prop"),
+				hexagon.Eq("c"),
 			),
 		)
 
@@ -235,9 +234,9 @@ func TestQuery(t *testing.T) {
 
 	t.Run("(sp) ⇒ o", func(t *testing.T) {
 		seq := toSeq(
-			hexagon.Query(store,
-				hexagon.IRI("ex:2"),
-				hexagon.IRI("prop"),
+			hexagon.Match(store,
+				hexagon.IRI.Eq("ex:2"),
+				hexagon.IRI.Eq("prop"),
 				nil,
 			),
 		)
@@ -248,10 +247,10 @@ func TestQuery(t *testing.T) {
 
 	t.Run("(so) ⇒ p", func(t *testing.T) {
 		seq := toSeq(
-			hexagon.Query(store,
-				hexagon.IRI("ex:1"),
+			hexagon.Match(store,
+				hexagon.IRI.Eq("ex:1"),
 				nil,
-				hexagon.Eq[any]("e"),
+				hexagon.Eq("e"),
 			),
 		)
 
@@ -261,10 +260,10 @@ func TestQuery(t *testing.T) {
 
 	t.Run("(po) ⇒ s", func(t *testing.T) {
 		seq := toSeq(
-			hexagon.Query(store,
+			hexagon.Match(store,
 				nil,
-				hexagon.IRI("prop"),
-				hexagon.Eq[any]("e"),
+				hexagon.IRI.Eq("prop"),
+				hexagon.Eq("e"),
 			),
 		)
 
@@ -281,8 +280,8 @@ func BenchmarkXxx(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		seq := hexagon.Query(store,
-			hexagon.IRI("ex:2"), nil, nil,
+		seq := hexagon.Match(store,
+			hexagon.IRI.Eq("ex:2"), nil, nil,
 		)
 		seq.FMap(func(s, p curie.IRI, o any) error { return nil })
 	}

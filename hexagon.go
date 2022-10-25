@@ -1,3 +1,11 @@
+//
+// Copyright (C) 2022 Dmitry Kolesnikov
+//
+// This file may be modified and distributed under the terms
+// of the MIT license.  See the LICENSE file for details.
+// https://github.com/fogfish/hexagon
+//
+
 package hexagon
 
 import (
@@ -9,9 +17,9 @@ import (
 	"github.com/fogfish/skiplist"
 )
 
-//
+// Store is the instance of knowledge storage
 type Store struct {
-	size   uint64
+	size   int
 	random rand.Source
 	spo    spo
 	sop    sop
@@ -21,6 +29,7 @@ type Store struct {
 	ops    ops
 }
 
+// Create new instance of knowledge storage
 func New() *Store {
 	rnd := rand.NewSource(time.Now().UnixNano())
 	return &Store{
@@ -34,7 +43,13 @@ func New() *Store {
 	}
 }
 
-func Put(store *Store, s, p curie.IRI, o any) {
+// Size returns number of knowledge statements in the store
+func Size(store *Store) int {
+	return store.size
+}
+
+// Put new knowledge statement into the store
+func Put[T DataType](store *Store, s, p curie.IRI, o T) {
 	k := guid.L.K(guid.Clock)
 	_po, _op := ensureForS(store, s)
 	_so, _os := ensureForP(store, p)
@@ -43,6 +58,7 @@ func Put(store *Store, s, p curie.IRI, o any) {
 	putO(store, _po, _so, s, p, o, k)
 	putP(store, _op, _sp, s, p, o, k)
 	putS(store, _os, _ps, s, p, o, k)
+	store.size++
 }
 
 func ensureForS(store *Store, s curie.IRI) (_po, _op) {
@@ -121,40 +137,9 @@ func putS(store *Store, _os _os, _ps _ps, s s, p p, o o, k k) {
 	skiplist.Put(__s, s, k)
 }
 
-func Query(store *Store, s *Predicate[s], p *Predicate[p], o *Predicate[o]) Iterator {
+// Match knowledge statements to the pattern and return stream of knowledge statements
+func Match(store *Store, s *Predicate[s], p *Predicate[p], o *Predicate[o]) Stream {
 	q := pattern{store: store, s: s, p: p, o: o}
 	_, iter := q.eval()
 	return iter
-}
-
-//
-type Node map[curie.IRI]any
-
-func (node Node) Append(s, p curie.IRI, o any) error {
-	if val, has := node[p]; !has {
-		node[p] = o
-	} else {
-		switch v := val.(type) {
-		case []any:
-			node[p] = append(v, o)
-		default:
-			node[p] = []any{v, o}
-		}
-	}
-	return nil
-}
-
-//
-type Graph map[curie.IRI]Node
-
-func (graph Graph) Append(s, p curie.IRI, o any) error {
-	if val, has := graph[s]; !has {
-		node := Node{}
-		node.Append(s, p, o)
-		graph[s] = node
-	} else {
-		val.Append(s, p, o)
-		graph[s] = val
-	}
-	return nil
 }
