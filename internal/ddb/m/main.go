@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/fogfish/hexer"
 	"github.com/fogfish/hexer/internal/ddb"
@@ -25,7 +26,16 @@ func main() {
 		)
 	}
 
-	store.Iterate()
+	q := hexer.Query(hexer.IRI.Eq("a"), hexer.IRI.Eq("name"), nil)
+
+	xx, s := ddb.Match(context.Background(), store, q)
+	fmt.Printf("===>> %v\n", xx)
+
+	for s.Next() {
+		fmt.Printf("==> %+v\n", s.Head())
+	}
+
+	// store.Iterate()
 
 	// iter := ddb.IT(store)
 

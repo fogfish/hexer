@@ -81,18 +81,16 @@ func (iter *Iterator[T]) Next() bool {
 	return true
 }
 
-type Unfold[T dynamo.Thing, A any] struct {
+type Unfold[T dynamo.Thing] struct {
 	seq Seq[T]
 	bag []hexer.SPOCK
 }
 
-func (unfold *Unfold[T, A]) Head() {
-	h := unfold.seq.Head()
-	a := unfold.bag[0]
-	fmt.Printf("==> %+v %+v\n", a, h)
+func (unfold *Unfold[T]) Head() hexer.SPOCK {
+	return unfold.bag[0]
 }
 
-func (unfold *Unfold[T, A]) Next() bool {
+func (unfold *Unfold[T]) Next() bool {
 	if unfold.bag != nil && len(unfold.bag) > 1 {
 		unfold.bag = unfold.bag[1:]
 		return true

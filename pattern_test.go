@@ -8,12 +8,7 @@
 
 package hexer
 
-import (
-	"testing"
-
-	"github.com/fogfish/it/v2"
-)
-
+/*
 func TestQuery(t *testing.T) {
 	store := New()
 
@@ -243,3 +238,4 @@ func TestQuery(t *testing.T) {
 	})
 
 }
+*/

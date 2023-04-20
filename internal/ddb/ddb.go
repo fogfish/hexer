@@ -18,20 +18,14 @@ type Store struct {
 	ops *ddb.Storage[ops]
 }
 
-func (store *Store) Iterate() {
-	// key := osp{G: "os|a"}
-	// seq := NewIterator(store.osp, key)
-	// for seq.Next() {
-	// 	fmt.Println(seq.Head())
-	// }
+func (store *Store) sPO(ctx context.Context, q hexer.Pattern) hexer.StreamX {
+	g := curie.IRI("a")
 
-	key := spo{G: "sp|a"}
+	key := spo{G: "sp|" + g, SP: encodeII(q.S.Value, "")}
+
 	seq := NewIterator(store.spo, key)
 
-	unf := &Unfold[spo, string]{seq: seq}
-	for unf.Next() {
-		unf.Head()
-	}
+	return &Unfold[spo]{seq: seq}
 
 	// key := spo{G: "sp|a"}
 	// seq := NewIterator(store.spo, key)
@@ -81,8 +75,6 @@ func New(connector string, opts ...dynamo.Option) (*Store, error) {
 	}, nil
 }
 
-// [T hexer.DataType]
-
 func Put(ctx context.Context, store *Store, spock hexer.SPOCK) error {
 	g := curie.IRI("a")
 
@@ -107,6 +99,62 @@ func Put(ctx context.Context, store *Store, spock hexer.SPOCK) error {
 	}
 
 	return nil
+}
+
+// type Streamer struct {
+
+// }
+
+func Match(ctx context.Context, store *Store, q hexer.Pattern) (hexer.Strategy, hexer.StreamX) {
+	strategy := q.Strategy()
+	switch strategy {
+	// x, o, _ ⇒ spo
+	case 0510:
+		return strategy, store.sPO(ctx, q)
+	// // x, _, o ⇒ sop
+	// case 0501:
+	// 	return strategy, q.sOP()
+	// // _, x, o ⇒ pos
+	// case 0051:
+	// 	return strategy, q.pOS()
+	// // o, x, _ ⇒ pso
+	// case 0150:
+	// 	return strategy, q.pSO()
+	// // o, _, x ⇒ osp
+	// case 0105:
+	// 	return strategy, q.oSP()
+	// // _, o, x ⇒ ops
+	// case 0015:
+	// 	return strategy, q.oPS()
+
+	// x, x, _ ⇒ spo
+	case 0550:
+		return strategy, store.sPO(ctx, q)
+	// TODO: return strategy, q.spO()
+	// // _, x, x ⇒ pos
+	// case 0055:
+	// 	return strategy, q.poS()
+	// // x, _, x ⇒ sop
+	// case 0505:
+	// 	return strategy, q.soP()
+
+	// x, _, _ ⇒ spo
+	case 0500:
+		return strategy, store.sPO(ctx, q)
+		// TODO:	return strategy, q.sPO()
+		// // _, x, _ ⇒ pso
+		// case 0050:
+		// 	return strategy, q.pSO()
+		// // _, _, x ⇒ osp
+		// case 0005:
+		// 	return strategy, q.oSP()
+
+		// // _, _, _ ⇒ spo
+		// case 0000:
+		// 	return strategy, q.spo()
+	}
+
+	return strategy, nil
 }
 
 // func Get(ctx context.Context, store *Store, spock hexer.SPOCK[string]) SPO {
