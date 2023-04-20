@@ -1,10 +1,10 @@
-package hexagon_test
+package hexer_test
 
 import (
 	"testing"
 
 	"github.com/fogfish/curie"
-	"github.com/fogfish/hexagon"
+	hexagon "github.com/fogfish/hexer"
 	"github.com/fogfish/it/v2"
 )
 

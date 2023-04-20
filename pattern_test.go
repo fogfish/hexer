@@ -6,7 +6,7 @@
 // https://github.com/fogfish/hexagon
 //
 
-package hexagon
+package hexer
 
 import (
 	"testing"

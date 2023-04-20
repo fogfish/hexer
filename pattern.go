@@ -6,7 +6,7 @@
 // https://github.com/fogfish/hexagon
 //
 
-package hexagon
+package hexer
 
 import (
 	"github.com/fogfish/curie"
@@ -31,7 +31,6 @@ type Predicate[T any] struct {
 	other  T
 }
 
-//
 type iri string
 
 const IRI = iri("hexagon.iri")
@@ -100,13 +99,12 @@ func toIterator[A, B any](pred *Predicate[A], list *skiplist.SkipList[A, B]) *sk
 }
 
 /*
-
 Strategy is a code that defines combination of indexes and resolution
 strategy to be used for query. The code consists of octal digits for
 each index in the order of <s,p,o>:
- - 0: best effort lookup, storage tries to scope lookup with filters
- - 1: lookup uses filters defined by predicate so that multiple values are inspected
- - 5: lookup uses exact by predicate so that single value is inspected
+  - 0: best effort lookup, storage tries to scope lookup with filters
+  - 1: lookup uses filters defined by predicate so that multiple values are inspected
+  - 5: lookup uses exact by predicate so that single value is inspected
 */
 type Strategy int
 
@@ -158,7 +156,6 @@ func (s Strategy) String() string {
 	return ""
 }
 
-//
 type pattern struct {
 	store *Store
 	s     *Predicate[s]
@@ -218,7 +215,6 @@ func (q pattern) eval() (Strategy, Stream) {
 }
 
 /*
-
 builds execution strategy for the pattern
 
 x, o, _ ⇒ spo
@@ -259,7 +255,7 @@ func (q pattern) strategy() Strategy {
 	case !exact(q.s) && order(q.p) && exact(q.o):
 		return 0015
 
-		// x, x, _ ⇒ spo
+	// x, x, _ ⇒ spo
 	case exact(q.s) && exact(q.p) && !exact(q.o):
 		return 0550
 	// _, x, x ⇒ pos
