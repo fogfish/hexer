@@ -5,99 +5,109 @@ import (
 	"github.com/fogfish/guid/v2"
 )
 
-const (
-	XSD_ANYURI = curie.IRI("xsd:anyURI")
-	XSD_STRING = curie.IRI("xsd:string")
-)
-
-type XSDValue interface{ isXSDValue() }
-
-type XSDAnyURI struct{ Value curie.IRI }
-
-func (XSDAnyURI) isXSDValue() {}
-
-type XSDString struct{ Value string }
-
-func (XSDString) isXSDValue() {}
-
-func ToXSDValue[T DataType](value T) XSDValue {
-	switch v := any(value).(type) {
-	case string:
-		return XSDString{Value: v}
-	default:
-		panic("xxxx")
-	}
-}
-
 type SPOCK struct {
 	S curie.IRI
 	P curie.IRI
-	O XSDValue
+	O Object
 	C float64
 	K guid.K
 }
 
-type Pattern struct {
-	S *Predicate[curie.IRI]
-	P *Predicate[curie.IRI]
-	O *Predicate[XSDValue]
-}
-
-func Query(s *Predicate[curie.IRI], p *Predicate[curie.IRI], o *Predicate[XSDValue]) Pattern {
-	return Pattern{S: s, P: p, O: o}
-}
-
-func (q Pattern) Strategy() Strategy {
-	switch {
-	// x, o, _ ⇒ spo
-	case exact(q.S) && order(q.P) && !exact(q.O):
-		return 0510
-	// x, _, o ⇒ sop
-	case exact(q.S) && !exact(q.P) && order(q.O):
-		return 0501
-	// _, x, o ⇒ pos
-	case !exact(q.S) && exact(q.P) && order(q.O):
-		return 0051
-	// o, x, _ ⇒ pso
-	case order(q.S) && exact(q.P) && !exact(q.O):
-		return 0150
-	// o, _, x ⇒ osp
-	case order(q.S) && !exact(q.P) && exact(q.O):
-		return 0105
-	// _, o, x ⇒ ops
-	case !exact(q.S) && order(q.P) && exact(q.O):
-		return 0015
-
-	// x, x, _ ⇒ spo
-	case exact(q.S) && exact(q.P) && !exact(q.O):
-		return 0550
-	// _, x, x ⇒ pos
-	case !exact(q.S) && exact(q.P) && exact(q.O):
-		return 0055
-	// x, _, x ⇒ sop
-	case exact(q.S) && !exact(q.P) && exact(q.O):
-		return 0505
-
-	// x, _, _ ⇒ spo
-	case exact(q.S) && !exact(q.P) && !exact(q.O):
-		return 0500
-	// _, x, _ ⇒ pso
-	case !exact(q.S) && exact(q.P) && !exact(q.O):
-		return 0050
-	// _, _, x ⇒ osp
-	case !exact(q.S) && !exact(q.P) && exact(q.O):
-		return 0005
-
-	// _, _, _ ⇒ spo
-	case !exact(q.S) && !exact(q.P) && !exact(q.O):
-		return 0000
-	}
-
-	return 0777
-}
-
-type StreamX interface {
+// Stream of <s,p,o,c,k> triples fetched from the store
+type Stream interface {
 	Head() SPOCK
 	Next() bool
-	// FMap(f func(SPOCK) error) error
+	// FMap(func(SPOCK) error) error
 }
+
+type filter struct {
+	pred   func(SPOCK) bool
+	stream Stream
+}
+
+func (filter *filter) Head() SPOCK {
+	return filter.stream.Head()
+}
+
+func (filter *filter) Next() bool {
+	for {
+		if !filter.stream.Next() {
+			return false
+		}
+
+		if filter.pred(filter.stream.Head()) {
+			return true
+		}
+	}
+}
+
+func NewFilter(pred func(SPOCK) bool, stream Stream) Stream {
+	return &filter{pred: pred, stream: stream}
+}
+
+/*
+
+	h := filter.seq.Head()
+	switch {
+	case filter.q.Clause == hexer.LT && h.S < filter.q.Value:
+		return true
+	case filter.q.Clause == hexer.GT && h.S > filter.q.Value:
+		return true
+	case filter.q.Clause == hexer.IN && h.S > filter.q.Value && h.S < filter.q.Other:
+		return true
+	}
+
+
+*/
+
+// type FilterP struct {
+// 	seq hexer.Stream
+// 	q   *hexer.Predicate[curie.IRI]
+// }
+
+// func (filter *FilterP) Head() hexer.SPOCK {
+// 	return filter.seq.Head()
+// }
+
+// func (filter *FilterP) Next() bool {
+// 	for {
+// 		if !filter.seq.Next() {
+// 			return false
+// 		}
+// 		h := filter.seq.Head()
+// 		switch {
+// 		case filter.q.Clause == hexer.LT && h.P < filter.q.Value:
+// 			return true
+// 		case filter.q.Clause == hexer.GT && h.P > filter.q.Value:
+// 			return true
+// 		case filter.q.Clause == hexer.IN && h.P > filter.q.Value && h.S < filter.q.Other:
+// 			return true
+// 		}
+// 	}
+// }
+
+// type FilterO struct {
+// 	seq hexer.StreamX
+// 	q   *hexer.Predicate[hexer.XSDValue]
+// }
+//
+// func (filter FilterO) Head() hexer.SPOCK {
+// 	return filter.seq.Head()
+// }
+//
+// func (filter FilterO) Next() bool {
+// 	for {
+// 		if !filter.seq.Next() {
+// 			return false
+// 		}
+// 		h := filter.seq.Head()
+// 		switch {
+// 		case filter.q.Clause == hexer.LT && h.O < filter.q.Value:
+// 			return true
+// 		case filter.q.Clause == hexer.GT && h.O > filter.q.Value:
+// 			return true
+// 		case filter.q.Clause == hexer.IN && h.O > filter.q.Value && h.O < filter.q.Other:
+// 			return true
+// 		}
+// 	}
+// }

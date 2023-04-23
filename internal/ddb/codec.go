@@ -20,6 +20,10 @@ import (
 // Pair codec
 //
 
+func encodeI(a curie.IRI) string {
+	return string(a)
+}
+
 func encodeII(a, b curie.IRI) string {
 	return string(a) + "|" + string(b)
 }
@@ -29,20 +33,20 @@ func decodeII(val string) (curie.IRI, curie.IRI) {
 	return curie.IRI(seq[0]), curie.IRI(seq[1])
 }
 
-func encodeIV(a curie.IRI, b hexer.XSDValue) string {
+func encodeIV(a curie.IRI, b hexer.Object) string {
 	return string(a) + "|" + encodeValue(b)
 }
 
-func decodeIV(val string) (curie.IRI, hexer.XSDValue) {
+func decodeIV(val string) (curie.IRI, hexer.Object) {
 	seq := strings.SplitN(val, "|", 2)
 	return curie.IRI(seq[0]), decodeValue(seq[1])
 }
 
-func encodeVI(a hexer.XSDValue, b curie.IRI) string {
+func encodeVI(a hexer.Object, b curie.IRI) string {
 	return encodeValue(a) + "|" + string(b)
 }
 
-func decodeVI(val string) (hexer.XSDValue, curie.IRI) {
+func decodeVI(val string) (hexer.Object, curie.IRI) {
 	seq := strings.SplitN(val, "|", 2)
 	return decodeValue(seq[0]), curie.IRI(seq[1])
 }
@@ -51,7 +55,7 @@ func decodeVI(val string) (hexer.XSDValue, curie.IRI) {
 // Value codec
 //
 
-func encodeValue(value hexer.XSDValue) string {
+func encodeValue(value hexer.Object) string {
 	switch v := value.(type) {
 	case hexer.XSDAnyURI:
 		return string(v.Value)
@@ -62,6 +66,6 @@ func encodeValue(value hexer.XSDValue) string {
 	}
 }
 
-func decodeValue(value string) hexer.XSDValue {
+func decodeValue(value string) hexer.Object {
 	return hexer.XSDString{Value: value}
 }

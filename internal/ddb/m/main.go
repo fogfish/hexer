@@ -19,17 +19,17 @@ func main() {
 	for _, x := range seq {
 		err = ddb.Put(context.Background(), store,
 			hexer.SPOCK{
-				S: "a",
+				S: "abc",
 				P: "name",
 				O: hexer.XSDString{Value: x},
 			},
 		)
 	}
 
-	q := hexer.Query(hexer.IRI.Eq("a"), hexer.IRI.Eq("name"), nil)
+	// q := hexer.NewQuery(hexer.IRI("abc"), hexer.Prefix("na"), nil)
+	q := hexer.NewQuery(hexer.Prefix("a"), nil, hexer.Eq("5"))
 
-	xx, s := ddb.Match(context.Background(), store, q)
-	fmt.Printf("===>> %v\n", xx)
+	s := ddb.Match(context.Background(), store, q)
 
 	for s.Next() {
 		fmt.Printf("==> %+v\n", s.Head())
