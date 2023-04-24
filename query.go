@@ -2,6 +2,7 @@ package hexer
 
 import (
 	"github.com/fogfish/curie"
+	"github.com/fogfish/hexer/xsd"
 )
 
 //
@@ -15,6 +16,8 @@ import (
 //   - 1: lookup uses filters defined by predicate so that multiple values are inspected
 //   - 4: lookup uses prefix match
 //   - 5: lookup uses exact by predicate so that single value is inspected
+
+// Strategy defines the code of index
 type Strategy int
 
 const (
@@ -27,6 +30,7 @@ const (
 	STRATEGY_OSP
 )
 
+// Hint to construct the query
 type Hint int
 
 const (
@@ -42,13 +46,83 @@ type Query struct {
 	Pattern                      Pattern
 }
 
+func (q Query) toStringS() (string, string, string) {
+	switch q.HintForS {
+	case HINT_MATCH:
+		return "s", "", ""
+	case HINT_FILTER_PREFIX:
+		return "ˢ", "", ""
+	case HINT_FILTER:
+		return "", "ˢ", ""
+	default:
+		return "", "", "s"
+	}
+}
+
+func (q Query) toStringP() (string, string, string) {
+	switch q.HintForP {
+	case HINT_MATCH:
+		return "p", "", ""
+	case HINT_FILTER_PREFIX:
+		return "ᴾ", "", ""
+	case HINT_FILTER:
+		return "", "ᴾ", ""
+	default:
+		return "", "", "p"
+	}
+}
+
+func (q Query) toStringO() (string, string, string) {
+	switch q.HintForO {
+	case HINT_MATCH:
+		return "o", "", ""
+	case HINT_FILTER_PREFIX:
+		return "º", "", ""
+	case HINT_FILTER:
+		return "", "º", ""
+	default:
+		return "", "", "o"
+	}
+}
+
+func (q Query) String() string {
+	s0, s1, s2 := q.toStringS()
+	p0, p1, p2 := q.toStringP()
+	o0, o1, o2 := q.toStringO()
+	t := ""
+	if s2 == "" && p2 == "" && o2 == "" {
+		t = "∅"
+	}
+
+	switch {
+	case q.Strategy == STRATEGY_SPO:
+		return "(" + s0 + p0 + o0 + ")" + s1 + p1 + o1 + " ⇒ " + s2 + p2 + o2 + t
+	case q.Strategy == STRATEGY_SOP:
+		return "(" + s0 + o0 + p0 + ")" + s1 + o1 + p1 + " ⇒ " + s2 + o2 + p2 + t
+	case q.Strategy == STRATEGY_PSO:
+		return "(" + p0 + s0 + o0 + ")" + p1 + s1 + o1 + " ⇒ " + p2 + s2 + o2 + t
+	case q.Strategy == STRATEGY_POS:
+		return "(" + p0 + o0 + s0 + ")" + p1 + o1 + s1 + " ⇒ " + p2 + o2 + s2 + t
+	case q.Strategy == STRATEGY_OPS:
+		return "(" + o0 + p0 + s0 + ")" + o1 + p1 + s1 + " ⇒ " + o2 + p2 + s2 + t
+	case q.Strategy == STRATEGY_OSP:
+		return "(" + o0 + s0 + p0 + ")" + o1 + s1 + p1 + " ⇒ " + o2 + s2 + p2 + t
+	}
+
+	return "(___) ⇒ ∅"
+}
+
 type Pattern struct {
 	S *Predicate[curie.IRI]
 	P *Predicate[curie.IRI]
-	O *Predicate[Object]
+	O *Predicate[xsd.Value]
 }
 
-func NewQuery(s *Predicate[curie.IRI], p *Predicate[curie.IRI], o *Predicate[Object]) Query {
+func NewQuery(
+	s *Predicate[curie.IRI],
+	p *Predicate[curie.IRI],
+	o *Predicate[xsd.Value],
+) Query {
 	q := Query{
 		Pattern:  Pattern{S: s, P: p, O: o},
 		HintForS: hintFor(s),

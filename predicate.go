@@ -30,11 +30,36 @@ func IRI(value curie.IRI) *Predicate[curie.IRI] {
 }
 
 // Makes `equal` to IRI predicate
-func Prefix(value curie.IRI) *Predicate[curie.IRI] {
+func Like(value curie.IRI) *Predicate[curie.IRI] {
 	return &Predicate[curie.IRI]{Clause: PQ, Value: value}
 }
 
 // Makes `equal to` value predicate
-func Eq[T xsd.DataType](value T) *Predicate[Object] {
-	return &Predicate[Object]{Clause: EQ, Value: From(value)}
+func Ref(value curie.IRI) *Predicate[xsd.Value] {
+	return &Predicate[xsd.Value]{Clause: EQ, Value: xsd.AnyURI{Value: value}}
+}
+
+// Makes `equal to` value predicate
+func Eq[T xsd.DataType](value T) *Predicate[xsd.Value] {
+	return &Predicate[xsd.Value]{Clause: EQ, Value: xsd.From(value)}
+}
+
+// Makes `prefix` value predicate
+func Prefix[T xsd.DataType](value T) *Predicate[xsd.Value] {
+	return &Predicate[xsd.Value]{Clause: PQ, Value: xsd.From(value)}
+}
+
+// Makes `less than` value predicate
+func Lt[T xsd.DataType](value T) *Predicate[xsd.Value] {
+	return &Predicate[xsd.Value]{Clause: LT, Value: xsd.From(value)}
+}
+
+// Makes `greater than` value predicate
+func Gt[T xsd.DataType](value T) *Predicate[xsd.Value] {
+	return &Predicate[xsd.Value]{Clause: GT, Value: xsd.From(value)}
+}
+
+// Makes `in range` predicate
+func In[T xsd.DataType](from, to T) *Predicate[xsd.Value] {
+	return &Predicate[xsd.Value]{Clause: IN, Value: xsd.From(from), Other: xsd.From(to)}
 }
