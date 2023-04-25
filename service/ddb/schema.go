@@ -208,7 +208,7 @@ func encodePSO(g curie.IRI, spock hexer.SPOCK) pso {
 
 func decodePSO(pso pso) []hexer.SPOCK {
 	seq := make([]hexer.SPOCK, len(pso.O))
-	s, p := decodeII(pso.PS)
+	p, s := decodeII(pso.PS)
 
 	for i, o := range pso.O {
 		seq[i].S, seq[i].P, seq[i].O = s, p, decodeValue(o)

@@ -24,6 +24,15 @@ type Predicate[T any] struct {
 	Other  T
 }
 
+// TODO: consolidate interface for query definition
+// When to use
+//  - IRI
+//  - Like
+//  - Ref
+//  - Eq
+//  - Prefix
+//
+
 // Makes `equal` to IRI predicate
 func IRI(value curie.IRI) *Predicate[curie.IRI] {
 	return &Predicate[curie.IRI]{Clause: EQ, Value: value}

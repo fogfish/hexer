@@ -264,7 +264,7 @@ func strategyForX(q Query) Strategy {
 		return STRATEGY_POS
 	// #27: __o ⇒ ops
 	case q.HintForS == HINT_NONE && q.HintForP == HINT_NONE && (q.HintForO == HINT_FILTER_PREFIX || q.HintForO == HINT_FILTER):
-		return STRATEGY_PSO
+		return STRATEGY_OPS
 	default:
 		return STRATEGY_NONE
 	}

@@ -1,5 +1,7 @@
 package xsd
 
+import "github.com/fogfish/curie"
+
 // DataType is a type constrain used by the library.
 // See https://www.w3.org/TR/xmlschema-2/#datatype
 //
@@ -33,6 +35,8 @@ type Base64Binary = []byte
 // From builds Object from Golang type
 func From[T DataType](value T) Value {
 	switch v := any(value).(type) {
+	case curie.IRI:
+		return AnyURI{Value: v}
 	case string:
 		return String{Value: v}
 	case int:

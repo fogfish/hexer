@@ -119,13 +119,13 @@ func (store *Store) streamPOS(ctx context.Context, q hexer.Query) hexer.Stream {
 
 	switch {
 	case q.HintForP == hexer.HINT_MATCH && q.HintForO == hexer.HINT_NONE:
-		key.PO = encodeII(q.Pattern.S.Value, "")
+		key.PO = encodeII(q.Pattern.P.Value, "")
 	case q.HintForP == hexer.HINT_MATCH && q.HintForO == hexer.HINT_MATCH:
-		key.PO = encodeIV(q.Pattern.S.Value, q.Pattern.O.Value)
+		key.PO = encodeIV(q.Pattern.P.Value, q.Pattern.O.Value)
 	case q.HintForP == hexer.HINT_MATCH && q.HintForO == hexer.HINT_FILTER_PREFIX:
-		key.PO = encodeIV(q.Pattern.S.Value, q.Pattern.O.Value)
+		key.PO = encodeIV(q.Pattern.P.Value, q.Pattern.O.Value)
 	case q.HintForP == hexer.HINT_FILTER_PREFIX:
-		key.PO = encodeI(q.Pattern.S.Value)
+		key.PO = encodeI(q.Pattern.P.Value)
 	default:
 		panic("pos so xxx")
 	}
@@ -185,7 +185,7 @@ func (store *Store) streamOSP(ctx context.Context, q hexer.Query) hexer.Stream {
 			stream,
 		)
 	case q.HintForP == hexer.HINT_FILTER:
-		panic("sop p xxx")
+		panic("osp p xxx")
 	}
 
 	return stream
@@ -201,7 +201,7 @@ func (store *Store) streamOPS(ctx context.Context, q hexer.Query) hexer.Stream {
 	case q.HintForO == hexer.HINT_MATCH && q.HintForP == hexer.HINT_MATCH:
 		key.OP = encodeVI(q.Pattern.O.Value, q.Pattern.P.Value)
 	case q.HintForO == hexer.HINT_MATCH && q.HintForP == hexer.HINT_FILTER_PREFIX:
-		key.OP = encodeVI(q.Pattern.O.Value, q.Pattern.S.Value)
+		key.OP = encodeVI(q.Pattern.O.Value, q.Pattern.P.Value)
 	case q.HintForO == hexer.HINT_FILTER_PREFIX:
 		key.OP = encodeValue(q.Pattern.O.Value)
 	default:
