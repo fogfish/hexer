@@ -140,7 +140,7 @@ func putS(store *Store, _os _os, _ps _ps, spock hexer.SPOCK) {
 	skiplist.Put(__s, spock.S, spock.K)
 }
 
-func Match(store *Store, q hexer.Query) hexer.Stream {
+func Match(store *Store, q hexer.Pattern) hexer.Stream {
 	switch q.Strategy {
 	case hexer.STRATEGY_SPO:
 		return store.streamSPO(q)

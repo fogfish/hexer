@@ -40,13 +40,15 @@ const (
 	HINT_MATCH
 )
 
-type Query struct {
+type Pattern struct {
 	Strategy                     Strategy
+	S                            *Predicate[curie.IRI]
+	P                            *Predicate[curie.IRI]
+	O                            *Predicate[xsd.Value]
 	HintForS, HintForP, HintForO Hint
-	Pattern                      Pattern
 }
 
-func (q Query) toStringS() (string, string, string) {
+func (q Pattern) toStringS() (string, string, string) {
 	switch q.HintForS {
 	case HINT_MATCH:
 		return "s", "", ""
@@ -59,7 +61,7 @@ func (q Query) toStringS() (string, string, string) {
 	}
 }
 
-func (q Query) toStringP() (string, string, string) {
+func (q Pattern) toStringP() (string, string, string) {
 	switch q.HintForP {
 	case HINT_MATCH:
 		return "p", "", ""
@@ -72,7 +74,7 @@ func (q Query) toStringP() (string, string, string) {
 	}
 }
 
-func (q Query) toStringO() (string, string, string) {
+func (q Pattern) toStringO() (string, string, string) {
 	switch q.HintForO {
 	case HINT_MATCH:
 		return "o", "", ""
@@ -85,7 +87,7 @@ func (q Query) toStringO() (string, string, string) {
 	}
 }
 
-func (q Query) String() string {
+func (q Pattern) String() string {
 	s0, s1, s2 := q.toStringS()
 	p0, p1, p2 := q.toStringP()
 	o0, o1, o2 := q.toStringO()
@@ -112,19 +114,13 @@ func (q Query) String() string {
 	return "(___) ⇒ ∅"
 }
 
-type Pattern struct {
-	S *Predicate[curie.IRI]
-	P *Predicate[curie.IRI]
-	O *Predicate[xsd.Value]
-}
-
-func NewQuery(
+func Query(
 	s *Predicate[curie.IRI],
 	p *Predicate[curie.IRI],
 	o *Predicate[xsd.Value],
-) Query {
-	q := Query{
-		Pattern:  Pattern{S: s, P: p, O: o},
+) Pattern {
+	q := Pattern{
+		S: s, P: p, O: o,
 		HintForS: hintFor(s),
 		HintForP: hintFor(p),
 		HintForO: hintFor(o),
@@ -148,7 +144,7 @@ func hintFor[T any](pred *Predicate[T]) Hint {
 }
 
 // Estimates execution strategy for pattern
-func strategy(q Query) Strategy {
+func strategy(q Pattern) Strategy {
 	switch {
 	case q.HintForS == HINT_MATCH:
 		return strategyForS(q)
@@ -164,7 +160,7 @@ func strategy(q Query) Strategy {
 	}
 }
 
-func strategyForS(q Query) Strategy {
+func strategyForS(q Pattern) Strategy {
 	switch {
 	// #2: x__ ⇒ spo
 	case q.HintForP == HINT_NONE && q.HintForO == HINT_NONE:
@@ -198,7 +194,7 @@ func strategyForS(q Query) Strategy {
 	}
 }
 
-func strategyForP(q Query) Strategy {
+func strategyForP(q Pattern) Strategy {
 	switch {
 	// #11: _x_ ⇒ pso
 	case q.HintForS == HINT_NONE && q.HintForO == HINT_NONE:
@@ -223,7 +219,7 @@ func strategyForP(q Query) Strategy {
 	}
 }
 
-func strategyForO(q Query) Strategy {
+func strategyForO(q Pattern) Strategy {
 	switch {
 	// #17: __x ⇒ ops
 	case q.HintForS == HINT_NONE && q.HintForP == HINT_NONE:
@@ -242,7 +238,7 @@ func strategyForO(q Query) Strategy {
 	}
 }
 
-func strategyForX(q Query) Strategy {
+func strategyForX(q Pattern) Strategy {
 	switch {
 	// #21: o__ ⇒ spo
 	case (q.HintForS == HINT_FILTER_PREFIX || q.HintForS == HINT_FILTER) && q.HintForP == HINT_NONE && q.HintForO == HINT_NONE:
@@ -269,101 +265,3 @@ func strategyForX(q Query) Strategy {
 		return STRATEGY_NONE
 	}
 }
-
-/*
-
-	switch {
-	// x, x, x ⇒ spo
-	case exact(q.S) && exact(q.P) && exact(q.O):
-		return STRATEGY_SPO + 0555
-	// x, x, r ⇒ spo
-	case exact(q.S) && exact(q.P) && affix(q.O):
-		return STRATEGY_SPO + 0554
-	// x, x, o ⇒ spo
-	case exact(q.S) && exact(q.P) && order(q.O):
-		return STRATEGY_SPO + 0551
-	// x, x, _ ⇒ spo
-	case exact(q.S) && exact(q.P) && q.O == nil:
-		return STRATEGY_SPO + 0550
-	// x, r, x ⇒ spo
-	case exact(q.S) && affix(q.P) && exact(q.O):
-		return STRATEGY_SOP + 0545
-	// x, o, x ⇒ spo
-	case exact(q.S) && order(q.P) && exact(q.O):
-		return STRATEGY_SOP + 0515
-	// x, _, x ⇒ spo
-	case exact(q.S) && q.P == nil && exact(q.O):
-		return STRATEGY_SOP + 0515
-	}
-
-
-	switch {
-	// r, x, x ⇒ pos
-	case affix(q.S) && exact(q.P) && exact(q.O):
-		return 0455
-	// r, x, r ⇒ pso
-	case affix(q.S) && exact(q.P) && affix(q.O):
-		return 0454
-	// r, x, o ⇒ pso
-	case affix(q.S) && exact(q.P) && order(q.O):
-		return 0451
-
-	// x, x, _ ⇒ spo
-	case exact(q.S) && exact(q.S) && q.O == nil:
-		return 0550
-	// x, _, x ⇒ sop
-	case exact(q.S) && q.P == nil && exact(q.O):
-		return 0505
-	// _, x, x ⇒ pos
-	case q.S == nil && exact(q.P) && exact(q.O):
-		return 0055
-	// r, x, _ ⇒ pso
-	case affix(q.S) && exact(q.S) && q.O == nil:
-		return 0450
-	// r, _, x ⇒ osp
-	case affix(q.S) && q.P == nil && exact(q.O):
-		return 0505
-	// x, _, r ⇒ sop
-	case exact(q.S) && q.P == nil && affix(q.O):
-		return 0505
-	// x, _, o ⇒ sop
-	case exact(q.S) && q.P == nil && affix(q.O):
-		return 0505
-
-	// x, o, _ ⇒ spo
-	case exact(q.S) && order(q.P) && !exact(q.O):
-		return 0510
-	// x, _, o ⇒ sop
-	case exact(q.s) && !exact(q.p) && order(q.o):
-		return 0501
-	// _, x, o ⇒ pos
-	case !exact(q.s) && exact(q.p) && order(q.o):
-		return 0051
-	// o, x, _ ⇒ pso
-	case order(q.s) && exact(q.p) && !exact(q.o):
-		return 0150
-	// o, _, x ⇒ osp
-	case order(q.s) && !exact(q.p) && exact(q.o):
-		return 0105
-	// _, o, x ⇒ ops
-	case !exact(q.s) && order(q.p) && exact(q.o):
-		return 0015
-
-	// x, _, _ ⇒ spo
-	case exact(q.s) && !exact(q.p) && !exact(q.o):
-		return 0500
-	// _, x, _ ⇒ pso
-	case !exact(q.s) && exact(q.p) && !exact(q.o):
-		return 0050
-	// _, _, x ⇒ osp
-	case !exact(q.s) && !exact(q.p) && exact(q.o):
-		return 0005
-
-	// _, _, _ ⇒ spo
-	case !exact(q.s) && !exact(q.p) && !exact(q.o):
-		return 0000
-	}
-
-	return 0777
-}
-*/

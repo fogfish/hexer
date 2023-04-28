@@ -15,7 +15,6 @@ import (
 	"github.com/fogfish/curie"
 	"github.com/fogfish/hexer"
 	"github.com/fogfish/hexer/service/ddb"
-	"github.com/fogfish/hexer/xsd"
 	"github.com/fogfish/it/v2"
 )
 
@@ -30,22 +29,21 @@ const (
 )
 
 func datasetSocialGraph() hexer.Bag {
-	bag := hexer.Bag{}
-	bag.Ref(A, "follows", B)
-	bag.Ref(C, "follows", B)
-	bag.Ref(C, "follows", E)
-	bag.Ref(C, "relates", D)
-	bag.Ref(D, "relates", B)
-	bag.Ref(B, "follows", F)
-	bag.Ref(F, "follows", G)
-	bag.Ref(D, "relates", G)
-	bag.Ref(E, "follows", F)
+	return hexer.Bag{
+		hexer.From(A, "follows", B),
+		hexer.From(C, "follows", B),
+		hexer.From(C, "follows", E),
+		hexer.From(C, "relates", D),
+		hexer.From(D, "relates", B),
+		hexer.From(B, "follows", F),
+		hexer.From(F, "follows", G),
+		hexer.From(D, "relates", G),
+		hexer.From(E, "follows", F),
 
-	bag.Add(B, "status", xsd.From("b"))
-	bag.Add(D, "status", xsd.From("d"))
-	bag.Add(G, "status", xsd.From("g"))
-
-	return bag
+		hexer.From(B, "status", "b"),
+		hexer.From(D, "status", "d"),
+		hexer.From(G, "status", "g"),
+	}
 }
 
 func setup(bag hexer.Bag) *ddb.Store {
@@ -67,7 +65,7 @@ func setup(bag hexer.Bag) *ddb.Store {
 func TestSocialGraph(t *testing.T) {
 	rds := setup(datasetSocialGraph())
 
-	Seq := func(t *testing.T, uid string, req hexer.Query) it.SeqOf[hexer.SPOCK] {
+	Seq := func(t *testing.T, uid string, req hexer.Pattern) it.SeqOf[hexer.SPOCK] {
 		t.Helper()
 		bag := hexer.Bag{}
 		seq := ddb.Match(context.Background(), rds, req)
@@ -83,7 +81,7 @@ func TestSocialGraph(t *testing.T) {
 	t.Run("#2: (s) ⇒ po", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(s) ⇒ po",
-				hexer.NewQuery(hexer.IRI.Equal(C), nil, nil),
+				hexer.Query(hexer.IRI.Equal(C), nil, nil),
 			).Equal(
 				hexer.From(C, "follows", B),
 				hexer.From(C, "follows", E),
@@ -95,7 +93,7 @@ func TestSocialGraph(t *testing.T) {
 	t.Run("#3: (sp) ⇒ o", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(sp) ⇒ o",
-				hexer.NewQuery(hexer.IRI.Equal(C), hexer.IRI.Equal("follows"), nil),
+				hexer.Query(hexer.IRI.Equal(C), hexer.IRI.Equal("follows"), nil),
 			).Equal(
 				hexer.From(C, "follows", B),
 				hexer.From(C, "follows", E),
@@ -106,7 +104,7 @@ func TestSocialGraph(t *testing.T) {
 	t.Run("#4: (sᴾ) ⇒ o", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(sᴾ) ⇒ o",
-				hexer.NewQuery(hexer.IRI.Equal(C), hexer.IRI.HasPrefix("f"), nil),
+				hexer.Query(hexer.IRI.Equal(C), hexer.IRI.HasPrefix("f"), nil),
 			).Equal(
 				hexer.From(C, "follows", B),
 				hexer.From(C, "follows", E),
@@ -117,7 +115,7 @@ func TestSocialGraph(t *testing.T) {
 	t.Run("#5: (so) ⇒ p", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(so) ⇒ p",
-				hexer.NewQuery(hexer.IRI.Equal(D), nil, hexer.Eq(G)),
+				hexer.Query(hexer.IRI.Equal(D), nil, hexer.Eq(G)),
 			).Equal(
 				hexer.From(D, "relates", G),
 			),
@@ -127,7 +125,7 @@ func TestSocialGraph(t *testing.T) {
 	t.Run("#6: (sº) ⇒ p", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(sº) ⇒ p",
-				hexer.NewQuery(hexer.IRI.Equal(D), nil, hexer.HasPrefix(curie.IRI("s:"))),
+				hexer.Query(hexer.IRI.Equal(D), nil, hexer.HasPrefix(curie.IRI("s:"))),
 			).Equal(
 				hexer.From(D, "relates", G),
 			),
@@ -157,7 +155,7 @@ func TestSocialGraph(t *testing.T) {
 	t.Run("#8: (so)ᴾ ⇒ ∅", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(soᴾ) ⇒ ∅",
-				hexer.NewQuery(hexer.IRI.Equal(C), hexer.IRI.HasPrefix("f"), hexer.Eq(E)),
+				hexer.Query(hexer.IRI.Equal(C), hexer.IRI.HasPrefix("f"), hexer.Eq(E)),
 			).Equal(
 				hexer.From(C, "follows", E),
 			),
@@ -197,7 +195,7 @@ func TestSocialGraph(t *testing.T) {
 	t.Run("#11: (p) ⇒ so", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(p) ⇒ so",
-				hexer.NewQuery(nil, hexer.IRI.Equal("status"), nil),
+				hexer.Query(nil, hexer.IRI.Equal("status"), nil),
 			).Equal(
 				hexer.From(G, "status", "g"), // s:G < u:B
 				hexer.From(B, "status", "b"),
@@ -209,7 +207,7 @@ func TestSocialGraph(t *testing.T) {
 	t.Run("#12: (po) ⇒ s", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(po) ⇒ s",
-				hexer.NewQuery(nil, hexer.IRI.Equal("follows"), hexer.Eq(B)),
+				hexer.Query(nil, hexer.IRI.Equal("follows"), hexer.Eq(B)),
 			).Equal(
 				hexer.From(C, "follows", B), // s:G < u:A
 				hexer.From(A, "follows", B),
@@ -220,7 +218,7 @@ func TestSocialGraph(t *testing.T) {
 	t.Run("#13: (pº) ⇒ s", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(pº) ⇒ s",
-				hexer.NewQuery(nil, hexer.IRI.Equal("follows"), hexer.HasPrefix(curie.IRI("s:"))),
+				hexer.Query(nil, hexer.IRI.Equal("follows"), hexer.HasPrefix(curie.IRI("s:"))),
 			).Equal(
 				hexer.From(B, "follows", F),
 				hexer.From(E, "follows", F),
@@ -232,7 +230,7 @@ func TestSocialGraph(t *testing.T) {
 	t.Run("#14: (pˢ) ⇒ o", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(pˢ) ⇒ o",
-				hexer.NewQuery(hexer.IRI.HasPrefix("s:"), hexer.IRI.Equal("follows"), nil),
+				hexer.Query(hexer.IRI.HasPrefix("s:"), hexer.IRI.Equal("follows"), nil),
 			).Equal(
 				hexer.From(C, "follows", B),
 				hexer.From(C, "follows", E),
@@ -264,7 +262,7 @@ func TestSocialGraph(t *testing.T) {
 	t.Run("#17: (o) ⇒ ps", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(o) ⇒ ps",
-				hexer.NewQuery(nil, nil, hexer.Eq(B)),
+				hexer.Query(nil, nil, hexer.Eq(B)),
 			).Equal(
 				hexer.From(C, "follows", B),
 				hexer.From(A, "follows", B),
@@ -276,7 +274,7 @@ func TestSocialGraph(t *testing.T) {
 	t.Run("#18: (oᴾ) ⇒ s", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(oᴾ) ⇒ s",
-				hexer.NewQuery(nil, hexer.IRI.HasPrefix("f"), hexer.Eq(B)),
+				hexer.Query(nil, hexer.IRI.HasPrefix("f"), hexer.Eq(B)),
 			).Equal(
 				hexer.From(C, "follows", B),
 				hexer.From(A, "follows", B),
@@ -287,7 +285,7 @@ func TestSocialGraph(t *testing.T) {
 	t.Run("#19: (oˢ) ⇒ p", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(oˢ) ⇒ p",
-				hexer.NewQuery(hexer.IRI.HasPrefix("u:"), nil, hexer.Eq(B)),
+				hexer.Query(hexer.IRI.HasPrefix("u:"), nil, hexer.Eq(B)),
 			).Equal(
 				hexer.From(A, "follows", B),
 				hexer.From(D, "relates", B),
@@ -298,7 +296,7 @@ func TestSocialGraph(t *testing.T) {
 	t.Run("#20: (oᴾˢ) ⇒ ∅", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(oᴾˢ) ⇒ ∅",
-				hexer.NewQuery(hexer.IRI.HasPrefix("u:"), hexer.IRI.HasPrefix("f"), hexer.Eq(B)),
+				hexer.Query(hexer.IRI.HasPrefix("u:"), hexer.IRI.HasPrefix("f"), hexer.Eq(B)),
 			).Equal(
 				hexer.From(A, "follows", B),
 			),
@@ -308,7 +306,7 @@ func TestSocialGraph(t *testing.T) {
 	t.Run("#21: (ˢ) ⇒ po", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(ˢ) ⇒ po",
-				hexer.NewQuery(hexer.IRI.HasPrefix("s:"), nil, nil),
+				hexer.Query(hexer.IRI.HasPrefix("s:"), nil, nil),
 			).Equal(
 				hexer.From(C, "follows", B),
 				hexer.From(C, "follows", E),
@@ -322,7 +320,7 @@ func TestSocialGraph(t *testing.T) {
 	t.Run("#25: (ᴾ) ⇒ so", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(ᴾ) ⇒ so",
-				hexer.NewQuery(nil, hexer.IRI.HasPrefix("rel"), nil),
+				hexer.Query(nil, hexer.IRI.HasPrefix("rel"), nil),
 			).Equal(
 				hexer.From(C, "relates", D),
 				hexer.From(D, "relates", G),
@@ -334,7 +332,7 @@ func TestSocialGraph(t *testing.T) {
 	t.Run("#27: (º) ⇒ ps", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(º) ⇒ ps",
-				hexer.NewQuery(nil, nil, hexer.HasPrefix(curie.IRI("u:"))),
+				hexer.Query(nil, nil, hexer.HasPrefix(curie.IRI("u:"))),
 			).Equal(
 				hexer.From(C, "follows", B),
 				hexer.From(A, "follows", B),

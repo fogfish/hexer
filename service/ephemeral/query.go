@@ -21,7 +21,7 @@ func queryIRI[A, B any](
 	pred *hexer.Predicate[curie.IRI],
 	list *skiplist.SkipList[curie.IRI, B],
 ) Seq[A, B] {
-	var seq Seq[curie.IRI, B]
+	var seq *skiplist.Iterator[curie.IRI, B]
 
 	switch {
 	case pred == nil:
@@ -43,7 +43,11 @@ func queryIRI[A, B any](
 		seq = skiplist.Range(list, pred.Value, pred.Other)
 	}
 
-	return seq.(Seq[A, B])
+	if seq == nil {
+		return nil
+	}
+
+	return Seq[curie.IRI, B](seq).(Seq[A, B])
 }
 
 // helper function to query the skiplist where key is xsd.Value
@@ -51,7 +55,7 @@ func queryXSD[A, B any](
 	pred *hexer.Predicate[xsd.Value],
 	list *skiplist.SkipList[xsd.Value, B],
 ) Seq[A, B] {
-	var seq Seq[xsd.Value, B]
+	var seq *skiplist.Iterator[xsd.Value, B]
 
 	switch {
 	case pred == nil:
@@ -63,17 +67,27 @@ func queryXSD[A, B any](
 		seq = after.TakeWhile(
 			func(x xsd.Value) bool { return xsd.HasPrefix(x, pred.Value) },
 		)
-	case pred.Clause == hexer.LT:
-		before, _ := skiplist.Split(list, pred.Value)
-		seq = NewDropWhileType[B](pred.Value.XSDType(), before)
-	case pred.Clause == hexer.GT:
-		_, after := skiplist.Split(list, pred.Value)
-		seq = NewTakeWhileType[B](pred.Value.XSDType(), after)
 	case pred.Clause == hexer.IN:
 		seq = skiplist.Range(list, pred.Value, pred.Other)
+	case pred.Clause == hexer.LT:
+		before, _ := skiplist.Split(list, pred.Value)
+		if before == nil {
+			return nil
+		}
+		return NewDropWhileType[B](pred.Value.XSDType(), before).(Seq[A, B])
+	case pred.Clause == hexer.GT:
+		_, after := skiplist.Split(list, pred.Value)
+		if after == nil {
+			return nil
+		}
+		return NewTakeWhileType[B](pred.Value.XSDType(), after).(Seq[A, B])
 	}
 
-	return seq.(Seq[A, B])
+	if seq == nil {
+		return nil
+	}
+
+	return Seq[xsd.Value, B](seq).(Seq[A, B])
 }
 
 // take sequence elements while xsd.Value belongs to same category (type)
@@ -120,18 +134,18 @@ func (seq *dropWhileType[T]) Next() bool {
 }
 
 // executes query against ⟨s, p, o⟩ data structure
-type querySPO hexer.Query
+type querySPO hexer.Pattern
 
 func (q querySPO) L1(list *skiplist.SkipList[s, _po]) Seq[s, _po] {
-	return queryIRI[s](q.Pattern.S, list)
+	return queryIRI[s](q.S, list)
 }
 
 func (q querySPO) L2(list *skiplist.SkipList[p, __o]) Seq[p, __o] {
-	return queryIRI[p](q.Pattern.P, list)
+	return queryIRI[p](q.P, list)
 }
 
 func (q querySPO) L3(list *skiplist.SkipList[o, k]) Seq[o, k] {
-	return queryXSD[o](q.Pattern.O, list)
+	return queryXSD[o](q.O, list)
 }
 
 func (q querySPO) ToSPOCK(s s, p p, o o) hexer.SPOCK {
@@ -139,18 +153,18 @@ func (q querySPO) ToSPOCK(s s, p p, o o) hexer.SPOCK {
 }
 
 // executes query against ⟨s, o, p⟩ data structure
-type querySOP hexer.Query
+type querySOP hexer.Pattern
 
 func (q querySOP) L1(list *skiplist.SkipList[s, _op]) Seq[s, _op] {
-	return queryIRI[s](q.Pattern.S, list)
+	return queryIRI[s](q.S, list)
 }
 
 func (q querySOP) L2(list *skiplist.SkipList[o, __p]) Seq[o, __p] {
-	return queryXSD[o](q.Pattern.O, list)
+	return queryXSD[o](q.O, list)
 }
 
 func (q querySOP) L3(list *skiplist.SkipList[p, k]) Seq[p, k] {
-	return queryIRI[p](q.Pattern.P, list)
+	return queryIRI[p](q.P, list)
 }
 
 func (q querySOP) ToSPOCK(s s, o o, p p) hexer.SPOCK {
@@ -158,18 +172,18 @@ func (q querySOP) ToSPOCK(s s, o o, p p) hexer.SPOCK {
 }
 
 // executes query against ⟨p, s, o⟩ data structure
-type queryPSO hexer.Query
+type queryPSO hexer.Pattern
 
 func (q queryPSO) L1(list *skiplist.SkipList[p, _so]) Seq[p, _so] {
-	return queryIRI[p](q.Pattern.P, list)
+	return queryIRI[p](q.P, list)
 }
 
 func (q queryPSO) L2(list *skiplist.SkipList[s, __o]) Seq[s, __o] {
-	return queryIRI[s](q.Pattern.S, list)
+	return queryIRI[s](q.S, list)
 }
 
 func (q queryPSO) L3(list *skiplist.SkipList[o, k]) Seq[o, k] {
-	return queryXSD[o](q.Pattern.O, list)
+	return queryXSD[o](q.O, list)
 }
 
 func (q queryPSO) ToSPOCK(p p, s s, o o) hexer.SPOCK {
@@ -177,18 +191,18 @@ func (q queryPSO) ToSPOCK(p p, s s, o o) hexer.SPOCK {
 }
 
 // executes query against ⟨p, o, s⟩ data structure
-type queryPOS hexer.Query
+type queryPOS hexer.Pattern
 
 func (q queryPOS) L1(list *skiplist.SkipList[p, _os]) Seq[p, _os] {
-	return queryIRI[p](q.Pattern.P, list)
+	return queryIRI[p](q.P, list)
 }
 
 func (q queryPOS) L2(list *skiplist.SkipList[o, __p]) Seq[o, __p] {
-	return queryXSD[o](q.Pattern.O, list)
+	return queryXSD[o](q.O, list)
 }
 
 func (q queryPOS) L3(list *skiplist.SkipList[s, k]) Seq[s, k] {
-	return queryIRI[s](q.Pattern.S, list)
+	return queryIRI[s](q.S, list)
 }
 
 func (q queryPOS) ToSPOCK(p p, o o, s s) hexer.SPOCK {
@@ -196,18 +210,18 @@ func (q queryPOS) ToSPOCK(p p, o o, s s) hexer.SPOCK {
 }
 
 // executes query against ⟨o, p, s⟩ data structure
-type queryOPS hexer.Query
+type queryOPS hexer.Pattern
 
 func (q queryOPS) L1(list *skiplist.SkipList[o, _ps]) Seq[o, _ps] {
-	return queryXSD[o](q.Pattern.O, list)
+	return queryXSD[o](q.O, list)
 }
 
 func (q queryOPS) L2(list *skiplist.SkipList[p, __s]) Seq[p, __s] {
-	return queryIRI[p](q.Pattern.P, list)
+	return queryIRI[p](q.P, list)
 }
 
 func (q queryOPS) L3(list *skiplist.SkipList[s, k]) Seq[s, k] {
-	return queryIRI[s](q.Pattern.S, list)
+	return queryIRI[s](q.S, list)
 }
 
 func (q queryOPS) ToSPOCK(o o, p p, s s) hexer.SPOCK {
@@ -215,18 +229,18 @@ func (q queryOPS) ToSPOCK(o o, p p, s s) hexer.SPOCK {
 }
 
 // executes query against ⟨o, s, p⟩ data structure
-type queryOSP hexer.Query
+type queryOSP hexer.Pattern
 
 func (q queryOSP) L1(list *skiplist.SkipList[o, _ps]) Seq[o, _ps] {
-	return queryXSD[o](q.Pattern.O, list)
+	return queryXSD[o](q.O, list)
 }
 
 func (q queryOSP) L2(list *skiplist.SkipList[s, __p]) Seq[s, __p] {
-	return queryIRI[s](q.Pattern.S, list)
+	return queryIRI[s](q.S, list)
 }
 
 func (q queryOSP) L3(list *skiplist.SkipList[p, k]) Seq[p, k] {
-	return queryIRI[p](q.Pattern.P, list)
+	return queryIRI[p](q.P, list)
 }
 
 func (q queryOSP) ToSPOCK(o o, s s, p p) hexer.SPOCK {

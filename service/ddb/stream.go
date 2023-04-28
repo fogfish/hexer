@@ -8,19 +8,19 @@ import (
 	"github.com/fogfish/hexer"
 )
 
-func (store *Store) streamSPO(ctx context.Context, q hexer.Query) hexer.Stream {
+func (store *Store) streamSPO(ctx context.Context, q hexer.Pattern) hexer.Stream {
 	g := curie.IRI("a")
 	key := spo{G: "sp|" + g}
 
 	switch {
 	case q.HintForS == hexer.HINT_MATCH && q.HintForP == hexer.HINT_NONE:
-		key.SP = encodeII(q.Pattern.S.Value, "")
+		key.SP = encodeII(q.S.Value, "")
 	case q.HintForS == hexer.HINT_MATCH && q.HintForP == hexer.HINT_MATCH:
-		key.SP = encodeII(q.Pattern.S.Value, q.Pattern.P.Value)
+		key.SP = encodeII(q.S.Value, q.P.Value)
 	case q.HintForS == hexer.HINT_MATCH && q.HintForP == hexer.HINT_FILTER_PREFIX:
-		key.SP = encodeII(q.Pattern.S.Value, q.Pattern.P.Value)
+		key.SP = encodeII(q.S.Value, q.P.Value)
 	case q.HintForS == hexer.HINT_FILTER_PREFIX:
-		key.SP = encodeI(q.Pattern.S.Value)
+		key.SP = encodeI(q.S.Value)
 	default:
 		panic("spo xxx")
 	}
@@ -41,19 +41,19 @@ func (store *Store) streamSPO(ctx context.Context, q hexer.Query) hexer.Stream {
 	return stream
 }
 
-func (store *Store) streamSOP(ctx context.Context, q hexer.Query) hexer.Stream {
+func (store *Store) streamSOP(ctx context.Context, q hexer.Pattern) hexer.Stream {
 	g := curie.IRI("a")
 	key := sop{G: "so|" + g}
 
 	switch {
 	case q.HintForS == hexer.HINT_MATCH && q.HintForO == hexer.HINT_NONE:
-		key.SO = encodeII(q.Pattern.S.Value, "")
+		key.SO = encodeII(q.S.Value, "")
 	case q.HintForS == hexer.HINT_MATCH && q.HintForO == hexer.HINT_MATCH:
-		key.SO = encodeIV(q.Pattern.S.Value, q.Pattern.O.Value)
+		key.SO = encodeIV(q.S.Value, q.O.Value)
 	case q.HintForS == hexer.HINT_MATCH && q.HintForO == hexer.HINT_FILTER_PREFIX:
-		key.SO = encodeIV(q.Pattern.S.Value, q.Pattern.O.Value)
+		key.SO = encodeIV(q.S.Value, q.O.Value)
 	case q.HintForS == hexer.HINT_FILTER_PREFIX:
-		key.SO = encodeI(q.Pattern.S.Value)
+		key.SO = encodeI(q.S.Value)
 	default:
 		panic("sop so xxx")
 	}
@@ -65,12 +65,12 @@ func (store *Store) streamSOP(ctx context.Context, q hexer.Query) hexer.Stream {
 	switch {
 	case q.HintForP == hexer.HINT_MATCH:
 		stream = hexer.NewFilter(
-			func(spock hexer.SPOCK) bool { return spock.P == q.Pattern.P.Value },
+			func(spock hexer.SPOCK) bool { return spock.P == q.P.Value },
 			stream,
 		)
 	case q.HintForP == hexer.HINT_FILTER_PREFIX:
 		stream = hexer.NewFilter(
-			func(spock hexer.SPOCK) bool { return strings.HasPrefix(string(spock.P), string(q.Pattern.P.Value)) },
+			func(spock hexer.SPOCK) bool { return strings.HasPrefix(string(spock.P), string(q.P.Value)) },
 			stream,
 		)
 	case q.HintForP == hexer.HINT_FILTER:
@@ -80,19 +80,19 @@ func (store *Store) streamSOP(ctx context.Context, q hexer.Query) hexer.Stream {
 	return stream
 }
 
-func (store *Store) streamPSO(ctx context.Context, q hexer.Query) hexer.Stream {
+func (store *Store) streamPSO(ctx context.Context, q hexer.Pattern) hexer.Stream {
 	g := curie.IRI("a")
 	key := pso{G: "ps|" + g}
 
 	switch {
 	case q.HintForP == hexer.HINT_MATCH && q.HintForS == hexer.HINT_NONE:
-		key.PS = encodeII(q.Pattern.P.Value, "")
+		key.PS = encodeII(q.P.Value, "")
 	case q.HintForP == hexer.HINT_MATCH && q.HintForS == hexer.HINT_MATCH:
-		key.PS = encodeII(q.Pattern.P.Value, q.Pattern.S.Value)
+		key.PS = encodeII(q.P.Value, q.S.Value)
 	case q.HintForP == hexer.HINT_MATCH && q.HintForS == hexer.HINT_FILTER_PREFIX:
-		key.PS = encodeII(q.Pattern.P.Value, q.Pattern.S.Value)
+		key.PS = encodeII(q.P.Value, q.S.Value)
 	case q.HintForP == hexer.HINT_FILTER_PREFIX:
-		key.PS = encodeI(q.Pattern.P.Value)
+		key.PS = encodeI(q.P.Value)
 	default:
 		panic("pso xxx")
 	}
@@ -113,19 +113,19 @@ func (store *Store) streamPSO(ctx context.Context, q hexer.Query) hexer.Stream {
 	return stream
 }
 
-func (store *Store) streamPOS(ctx context.Context, q hexer.Query) hexer.Stream {
+func (store *Store) streamPOS(ctx context.Context, q hexer.Pattern) hexer.Stream {
 	g := curie.IRI("a")
 	key := pos{G: "po|" + g}
 
 	switch {
 	case q.HintForP == hexer.HINT_MATCH && q.HintForO == hexer.HINT_NONE:
-		key.PO = encodeII(q.Pattern.P.Value, "")
+		key.PO = encodeII(q.P.Value, "")
 	case q.HintForP == hexer.HINT_MATCH && q.HintForO == hexer.HINT_MATCH:
-		key.PO = encodeIV(q.Pattern.P.Value, q.Pattern.O.Value)
+		key.PO = encodeIV(q.P.Value, q.O.Value)
 	case q.HintForP == hexer.HINT_MATCH && q.HintForO == hexer.HINT_FILTER_PREFIX:
-		key.PO = encodeIV(q.Pattern.P.Value, q.Pattern.O.Value)
+		key.PO = encodeIV(q.P.Value, q.O.Value)
 	case q.HintForP == hexer.HINT_FILTER_PREFIX:
-		key.PO = encodeI(q.Pattern.P.Value)
+		key.PO = encodeI(q.P.Value)
 	default:
 		panic("pos so xxx")
 	}
@@ -137,12 +137,12 @@ func (store *Store) streamPOS(ctx context.Context, q hexer.Query) hexer.Stream {
 	switch {
 	case q.HintForS == hexer.HINT_MATCH:
 		stream = hexer.NewFilter(
-			func(spock hexer.SPOCK) bool { return spock.S == q.Pattern.S.Value },
+			func(spock hexer.SPOCK) bool { return spock.S == q.S.Value },
 			stream,
 		)
 	case q.HintForS == hexer.HINT_FILTER_PREFIX:
 		stream = hexer.NewFilter(
-			func(spock hexer.SPOCK) bool { return strings.HasPrefix(string(spock.S), string(q.Pattern.S.Value)) },
+			func(spock hexer.SPOCK) bool { return strings.HasPrefix(string(spock.S), string(q.S.Value)) },
 			stream,
 		)
 	case q.HintForS == hexer.HINT_FILTER:
@@ -152,19 +152,19 @@ func (store *Store) streamPOS(ctx context.Context, q hexer.Query) hexer.Stream {
 	return stream
 }
 
-func (store *Store) streamOSP(ctx context.Context, q hexer.Query) hexer.Stream {
+func (store *Store) streamOSP(ctx context.Context, q hexer.Pattern) hexer.Stream {
 	g := curie.IRI("a")
 	key := osp{G: "os|" + g}
 
 	switch {
 	case q.HintForO == hexer.HINT_MATCH && q.HintForS == hexer.HINT_NONE:
-		key.OS = encodeVI(q.Pattern.O.Value, "")
+		key.OS = encodeVI(q.O.Value, "")
 	case q.HintForO == hexer.HINT_MATCH && q.HintForS == hexer.HINT_MATCH:
-		key.OS = encodeVI(q.Pattern.O.Value, q.Pattern.S.Value)
+		key.OS = encodeVI(q.O.Value, q.S.Value)
 	case q.HintForO == hexer.HINT_MATCH && q.HintForS == hexer.HINT_FILTER_PREFIX:
-		key.OS = encodeVI(q.Pattern.O.Value, q.Pattern.S.Value)
+		key.OS = encodeVI(q.O.Value, q.S.Value)
 	case q.HintForO == hexer.HINT_FILTER_PREFIX:
-		key.OS = encodeValue(q.Pattern.O.Value)
+		key.OS = encodeValue(q.O.Value)
 	default:
 		panic("osp os xxx")
 	}
@@ -176,12 +176,12 @@ func (store *Store) streamOSP(ctx context.Context, q hexer.Query) hexer.Stream {
 	switch {
 	case q.HintForP == hexer.HINT_MATCH:
 		stream = hexer.NewFilter(
-			func(spock hexer.SPOCK) bool { return spock.P == q.Pattern.P.Value },
+			func(spock hexer.SPOCK) bool { return spock.P == q.P.Value },
 			stream,
 		)
 	case q.HintForP == hexer.HINT_FILTER_PREFIX:
 		stream = hexer.NewFilter(
-			func(spock hexer.SPOCK) bool { return strings.HasPrefix(string(spock.P), string(q.Pattern.P.Value)) },
+			func(spock hexer.SPOCK) bool { return strings.HasPrefix(string(spock.P), string(q.P.Value)) },
 			stream,
 		)
 	case q.HintForP == hexer.HINT_FILTER:
@@ -191,19 +191,19 @@ func (store *Store) streamOSP(ctx context.Context, q hexer.Query) hexer.Stream {
 	return stream
 }
 
-func (store *Store) streamOPS(ctx context.Context, q hexer.Query) hexer.Stream {
+func (store *Store) streamOPS(ctx context.Context, q hexer.Pattern) hexer.Stream {
 	g := curie.IRI("a")
 	key := ops{G: "op|" + g}
 
 	switch {
 	case q.HintForO == hexer.HINT_MATCH && q.HintForP == hexer.HINT_NONE:
-		key.OP = encodeVI(q.Pattern.O.Value, "")
+		key.OP = encodeVI(q.O.Value, "")
 	case q.HintForO == hexer.HINT_MATCH && q.HintForP == hexer.HINT_MATCH:
-		key.OP = encodeVI(q.Pattern.O.Value, q.Pattern.P.Value)
+		key.OP = encodeVI(q.O.Value, q.P.Value)
 	case q.HintForO == hexer.HINT_MATCH && q.HintForP == hexer.HINT_FILTER_PREFIX:
-		key.OP = encodeVI(q.Pattern.O.Value, q.Pattern.P.Value)
+		key.OP = encodeVI(q.O.Value, q.P.Value)
 	case q.HintForO == hexer.HINT_FILTER_PREFIX:
-		key.OP = encodeValue(q.Pattern.O.Value)
+		key.OP = encodeValue(q.O.Value)
 	default:
 		panic("ops op xxx")
 	}
@@ -215,12 +215,12 @@ func (store *Store) streamOPS(ctx context.Context, q hexer.Query) hexer.Stream {
 	switch {
 	case q.HintForS == hexer.HINT_MATCH:
 		stream = hexer.NewFilter(
-			func(spock hexer.SPOCK) bool { return spock.S == q.Pattern.S.Value },
+			func(spock hexer.SPOCK) bool { return spock.S == q.S.Value },
 			stream,
 		)
 	case q.HintForS == hexer.HINT_FILTER_PREFIX:
 		stream = hexer.NewFilter(
-			func(spock hexer.SPOCK) bool { return strings.HasPrefix(string(spock.S), string(q.Pattern.S.Value)) },
+			func(spock hexer.SPOCK) bool { return strings.HasPrefix(string(spock.S), string(q.S.Value)) },
 			stream,
 		)
 	case q.HintForS == hexer.HINT_FILTER:
