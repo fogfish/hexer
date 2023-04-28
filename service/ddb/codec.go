@@ -49,9 +49,9 @@ func decodeVI(val string) (xsd.Value, curie.IRI) {
 func encodeValue(value xsd.Value) string {
 	switch v := value.(type) {
 	case xsd.AnyURI:
-		return "ᴵ" + string(v.Value)
+		return "ᴵ" + string(v)
 	case xsd.String:
-		return "ᴸ" + v.Value
+		return "ᴸ" + string(v)
 	default:
 		panic("not supported")
 	}
@@ -60,9 +60,9 @@ func encodeValue(value xsd.Value) string {
 func decodeValue(value string) xsd.Value {
 	switch value[:3] {
 	case "ᴵ":
-		return xsd.AnyURI{Value: curie.IRI(value[3:])}
+		return xsd.AnyURI(curie.IRI(value[3:]))
 	case "ᴸ":
-		return xsd.String{Value: value[3:]}
+		return xsd.String(value[3:])
 	}
 
 	return nil

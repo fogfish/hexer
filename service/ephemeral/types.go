@@ -64,11 +64,3 @@ func newPSO(rnd rand.Source) pso { return skiplist.New[p, _so](ord.IRI, rnd) }
 func newPOS(rnd rand.Source) pos { return skiplist.New[p, _os](ord.IRI, rnd) }
 func newOSP(rnd rand.Source) osp { return skiplist.New[o, _sp](ord.XSD, rnd) }
 func newOPS(rnd rand.Source) ops { return skiplist.New[o, _ps](ord.XSD, rnd) }
-
-// func (spo *spo) Iter(pred *hexer.Predicate[s]) Seq[s, _po] {
-// 	var l *skiplist.SkipList[s, _po] = (*skiplist.SkipList[s, _po])(spo)
-
-// 	return overIRI[s, _po](pred)(l)
-// }
-
-// func

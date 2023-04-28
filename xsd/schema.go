@@ -37,8 +37,12 @@ func From[T DataType](value T) Value {
 	switch v := any(value).(type) {
 	case curie.IRI:
 		return AnyURI(v)
+	case AnyURI:
+		return v
 	case string:
 		return String(v)
+	case String:
+		return v
 	// case int:
 	// 	return Integer{Value: v}
 	default:

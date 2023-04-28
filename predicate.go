@@ -24,30 +24,22 @@ type Predicate[T any] struct {
 	Other  T
 }
 
-// TODO: consolidate interface for query definition
-// When to use
-//  - IRI
-//  - Like
-//  - Ref
-//  - Eq
-//  - Prefix
-//
+type iri string
 
-// TODO: Prefix only for curie.IRI & xsd.String
+const IRI = iri("")
 
 // Makes `equal` to IRI predicate
-func IRI(value curie.IRI) *Predicate[curie.IRI] {
+func (iri) Eq(value curie.IRI) *Predicate[curie.IRI] {
 	return &Predicate[curie.IRI]{Clause: EQ, Value: value}
 }
 
-// Makes `equal` to IRI predicate
-func Like(value curie.IRI) *Predicate[curie.IRI] {
-	return &Predicate[curie.IRI]{Clause: PQ, Value: value}
+func (iri) Equal(value curie.IRI) *Predicate[curie.IRI] {
+	return &Predicate[curie.IRI]{Clause: EQ, Value: value}
 }
 
-// Makes `equal to` value predicate
-func Ref(value curie.IRI) *Predicate[xsd.Value] {
-	return &Predicate[xsd.Value]{Clause: EQ, Value: xsd.AnyURI(value)}
+// Makes `prefix` to IRI predicate
+func (iri) HasPrefix(value curie.IRI) *Predicate[curie.IRI] {
+	return &Predicate[curie.IRI]{Clause: PQ, Value: value}
 }
 
 // Makes `equal to` value predicate
@@ -56,7 +48,7 @@ func Eq[T xsd.DataType](value T) *Predicate[xsd.Value] {
 }
 
 // Makes `prefix` value predicate
-func Prefix[T xsd.DataType](value T) *Predicate[xsd.Value] {
+func HasPrefix[T xsd.DataType](value T) *Predicate[xsd.Value] {
 	return &Predicate[xsd.Value]{Clause: PQ, Value: xsd.From(value)}
 }
 

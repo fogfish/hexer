@@ -20,9 +20,10 @@ func (spock SPOCK) String() string {
 	return fmt.Sprintf("⟨%s %s %s⟩", spock.S.Safe(), spock.P.Safe(), spock.O)
 }
 
-func Link(s, p, o curie.IRI) SPOCK {
-	return SPOCK{S: s, P: p, O: xsd.AnyURI(o)}
-}
+// use From with correct DataType - curie.IRI
+// func Link(s, p, o curie.IRI) SPOCK {
+// 	return SPOCK{S: s, P: p, O: xsd.AnyURI(o)}
+// }
 
 func From[T xsd.DataType](s, p curie.IRI, o T) SPOCK {
 	return SPOCK{S: s, P: p, O: xsd.From(o)}
