@@ -132,6 +132,17 @@ func TestSocialGraph(t *testing.T) {
 		)
 	})
 
+	// TODO: test all functions
+	// t.Run("#6: (s)º ⇒ p", func(t *testing.T) {
+	// 	it.Then(t).Should(
+	// 		Seq(t, "(s)º ⇒ p",
+	// 			hexer.NewQuery(hexer.IRI.Equal(D), nil, hexer.Lt(curie.IRI("x"))),
+	// 		).Equal(
+	// 			hexer.From(D, "status", "d"),
+	// 		),
+	// 	)
+	// })
+
 	t.Run("#7: (spo) ⇒ ∅", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(spo) ⇒ ∅",

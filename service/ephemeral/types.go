@@ -10,14 +10,6 @@ import (
 	"github.com/fogfish/skiplist"
 )
 
-// type __x = *skiplist.SkipList[xsd.Value, guid.K]
-// type _xx = *skiplist.SkipList[xsd.Value, __x]
-// type xxx = *skiplist.SkipList[xsd.Value, _xx]
-
-// func newX(rnd rand.Source) __x   { return skiplist.New[xsd.Value, guid.K](ord.XSD, rnd) }
-// func newXX(rnd rand.Source) _xx  { return skiplist.New[xsd.Value, __x](ord.XSD, rnd) }
-// func newXXX(rnd rand.Source) xxx { return skiplist.New[xsd.Value, _xx](ord.XSD, rnd) }
-
 // components of <s,p,o,c,k> triple
 type s = curie.IRI // subject
 type p = curie.IRI // predicate
