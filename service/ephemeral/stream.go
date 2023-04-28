@@ -2,93 +2,176 @@ package ephemeral
 
 import (
 	"github.com/fogfish/hexer"
+	"github.com/fogfish/skiplist"
 )
 
-type ispo struct{ *Iterator[s, p, o] }
+type hSPO hexer.Query
 
-func (i *ispo) Head() hexer.SPOCK {
-	s, p, o := i.Iterator.Head()
-	return hexer.SPOCK{S: s, P: p, O: o}
+func (q hSPO) L1(list *skiplist.SkipList[s, _po]) Seq[s, _po] {
+	return overIRI[s, _po](q.Pattern.S)(list)
 }
 
-func (i *ispo) Next() bool { return i.Iterator.Next() }
+func (q hSPO) L2(list *skiplist.SkipList[p, __o]) Seq[p, __o] {
+	return overIRI[p, __o](q.Pattern.P)(list)
+}
 
-func (i *ispo) FMap(f func(hexer.SPOCK) error) error {
-	for i.Next() {
-		if err := f(i.Head()); err != nil {
-			return err
-		}
-	}
-	return nil
+func (q hSPO) L3(list *skiplist.SkipList[o, k]) Seq[o, k] {
+	return overXSD[o, k](q.Pattern.O)(list)
+}
+
+type hSOP hexer.Query
+
+func (q hSOP) L1(list *skiplist.SkipList[s, _op]) Seq[s, _op] {
+	return overIRI[s, _op](q.Pattern.S)(list)
+}
+
+func (q hSOP) L2(list *skiplist.SkipList[o, __p]) Seq[o, __p] {
+	return overXSD[o, __p](q.Pattern.O)(list)
+}
+
+func (q hSOP) L3(list *skiplist.SkipList[p, k]) Seq[p, k] {
+	return overIRI[p, k](q.Pattern.P)(list)
+}
+
+type hPSO hexer.Query
+
+func (q hPSO) L1(list *skiplist.SkipList[p, _so]) Seq[p, _so] {
+	return overIRI[p, _so](q.Pattern.P)(list)
+}
+
+func (q hPSO) L2(list *skiplist.SkipList[s, __o]) Seq[s, __o] {
+	return overIRI[s, __o](q.Pattern.S)(list)
+}
+
+func (q hPSO) L3(list *skiplist.SkipList[o, k]) Seq[o, k] {
+	return overXSD[o, k](q.Pattern.O)(list)
+}
+
+type hPOS hexer.Query
+
+func (q hPOS) L1(list *skiplist.SkipList[p, _os]) Seq[p, _os] {
+	return overIRI[p, _os](q.Pattern.P)(list)
+}
+
+func (q hPOS) L2(list *skiplist.SkipList[o, __p]) Seq[o, __p] {
+	return overXSD[o, __p](q.Pattern.O)(list)
+}
+
+func (q hPOS) L3(list *skiplist.SkipList[s, k]) Seq[s, k] {
+	return overIRI[s, k](q.Pattern.S)(list)
+}
+
+type hOPS hexer.Query
+
+func (q hOPS) L1(list *skiplist.SkipList[o, _ps]) Seq[o, _ps] {
+	return overXSD[o, _ps](q.Pattern.O)(list)
+}
+
+func (q hOPS) L2(list *skiplist.SkipList[p, __s]) Seq[p, __s] {
+	return overIRI[p, __s](q.Pattern.P)(list)
+}
+
+func (q hOPS) L3(list *skiplist.SkipList[s, k]) Seq[s, k] {
+	return overIRI[s, k](q.Pattern.S)(list)
+}
+
+type hOSP hexer.Query
+
+func (q hOSP) L1(list *skiplist.SkipList[o, _ps]) Seq[o, _ps] {
+	return overXSD[o, _ps](q.Pattern.O)(list)
+}
+
+func (q hOSP) L2(list *skiplist.SkipList[s, __p]) Seq[s, __p] {
+	return overIRI[s, __p](q.Pattern.S)(list)
+}
+
+func (q hOSP) L3(list *skiplist.SkipList[p, k]) Seq[p, k] {
+	return overIRI[p, k](q.Pattern.P)(list)
 }
 
 func (store *Store) streamSPO(q hexer.Query) hexer.Stream {
-	iter := &Iterator[s, p, o]{
-		abc: toIterator(q.Pattern.S, store.spo),
-		pb:  q.Pattern.P,
-		pc:  q.Pattern.O,
+	return NewIterator[s, p, o](
+		hSPO(q),
+		store.spo,
+		// q.Pattern.S,
+		// q.Pattern.P,
+		// q.Pattern.O,
+		func(s s, p p, o o) (hexer.SPOCK, bool) {
+			return hexer.SPOCK{S: s, P: p, O: o}, true
+		},
+	)
+}
+
+func (store *Store) streamSOP(q hexer.Query) hexer.Stream {
+	builder := func(s s, o o, p p) (hexer.SPOCK, bool) {
+		return hexer.SPOCK{S: s, P: p, O: o}, true
 	}
 
-	return &ispo{iter}
+	if q.Pattern.O != nil {
+		domain := q.Pattern.O.Value.XSDType()
+		builder = func(s s, o o, p p) (hexer.SPOCK, bool) {
+			return hexer.SPOCK{S: s, P: p, O: o}, o.XSDType() == domain
+		}
+	}
 
-	// switch {
-	// case q.HintForS == hexer.HINT_MATCH && q.HintForP == hexer.HINT_NONE && q.HintForO == hexer.HINT_NONE:
-	// 	iter := &BiIterator[p, o]{s: q.Pattern.S.Value, ap: q.Pattern.O}
+	return NewIterator[s, o, p](
+		hSOP(q),
+		store.sop,
+		// q.Pattern.S,
+		// q.Pattern.O,
+		// q.Pattern.P,
+		builder,
+	)
+}
 
-	// 	if _po, has := skiplist.Lookup(store.spo, q.Pattern.S.Value); has {
-	// 		iter.a = &iter.o
-	// 		iter.b = &iter.p
-	// 		iter._ba = toIterator(q.Pattern.P, _po)
+func (store *Store) streamPSO(q hexer.Query) hexer.Stream {
+	return NewIterator[p, s, o](
+		hPSO(q),
+		store.pso,
+		// q.Pattern.P,
+		// q.Pattern.S,
+		// q.Pattern.O,
+		func(p p, s s, o o) (hexer.SPOCK, bool) {
+			return hexer.SPOCK{S: s, P: p, O: o}, true
+		},
+	)
+}
 
-	// 		return iter
-	// 	}
+func (store *Store) streamPOS(q hexer.Query) hexer.Stream {
+	return NewIterator[p, o, s](
+		hPOS(q),
+		store.pos,
+		// q.Pattern.P,
+		// q.Pattern.O,
+		// q.Pattern.S,
+		func(p p, o o, s s) (hexer.SPOCK, bool) {
+			return hexer.SPOCK{S: s, P: p, O: o}, true
+		},
+	)
+}
 
-	// 	return iter
+func (store *Store) streamOSP(q hexer.Query) hexer.Stream {
+	return NewIterator[o, s, p](
+		hOSP(q),
+		store.osp,
+		// q.Pattern.O,
+		// q.Pattern.S,
+		// q.Pattern.P,
+		func(o o, s s, p p) (hexer.SPOCK, bool) {
+			return hexer.SPOCK{S: s, P: p, O: o}, true
+		},
+	)
+}
 
-	// case q.HintForS == hexer.HINT_MATCH && q.HintForP == hexer.HINT_MATCH && q.HintForO == hexer.HINT_NONE:
-	// 	iter := &Iterator[o]{s: q.Pattern.S.Value, p: q.Pattern.P.Value}
-
-	// 	if _po, has := skiplist.Lookup(store.spo, q.Pattern.S.Value); has {
-	// 		if __o, has := skiplist.Lookup(_po, q.Pattern.P.Value); has {
-	// 			iter.a = &iter.o
-	// 			iter.__a = toIterator(q.Pattern.O, __o)
-
-	// 			return iter
-	// 		}
-	// 	}
-
-	// 	return iter
-
-	// 	key.SP = encodeII(q.Pattern.S.Value, q.Pattern.P.Value)
-	// case q.HintForS == hexer.HINT_MATCH && q.HintForP == hexer.HINT_FILTER_PREFIX:
-	// 	key.SP = encodeII(q.Pattern.S.Value, q.Pattern.P.Value)
-	// case q.HintForS == hexer.HINT_FILTER_PREFIX:
-	// 	key.SP = encodeI(q.Pattern.S.Value)
-	// default:
-	// 	panic("spo xxx")
-	// }
-
-	// var stream hexer.Stream = &Unfold[spo]{
-	// 	seq: NewIterator(store.spo, key),
-	// }
-
-	// switch {
-	// case q.HintForO == hexer.HINT_MATCH:
-	// 	panic("spo o xxx")
-	// case q.HintForO == hexer.HINT_FILTER_PREFIX:
-	// 	panic("spo o xxx")
-	// case q.HintForO == hexer.HINT_FILTER:
-	// 	panic("spo o xxx")
-	// }
-
-	// return stream
-
-	// it := Iterator{spo: skiplist.Values(store.spo)}
-
-	// for it.Next() {
-	// 	h := it.Head()
-	// 	fmt.Printf("%v\n", h)
-	// }
-
-	// return nil
+func (store *Store) streamOPS(q hexer.Query) hexer.Stream {
+	return NewIterator[o, p, s](
+		hOPS(q),
+		store.ops,
+		// q.Pattern.O,
+		// q.Pattern.P,
+		// q.Pattern.S,
+		func(o o, p p, s s) (hexer.SPOCK, bool) {
+			return hexer.SPOCK{S: s, P: p, O: o}, true
+		},
+	)
 }

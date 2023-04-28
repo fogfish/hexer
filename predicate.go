@@ -33,6 +33,8 @@ type Predicate[T any] struct {
 //  - Prefix
 //
 
+// TODO: Prefix only for curie.IRI & xsd.String
+
 // Makes `equal` to IRI predicate
 func IRI(value curie.IRI) *Predicate[curie.IRI] {
 	return &Predicate[curie.IRI]{Clause: EQ, Value: value}
@@ -45,7 +47,7 @@ func Like(value curie.IRI) *Predicate[curie.IRI] {
 
 // Makes `equal to` value predicate
 func Ref(value curie.IRI) *Predicate[xsd.Value] {
-	return &Predicate[xsd.Value]{Clause: EQ, Value: xsd.AnyURI{Value: value}}
+	return &Predicate[xsd.Value]{Clause: EQ, Value: xsd.AnyURI(value)}
 }
 
 // Makes `equal to` value predicate

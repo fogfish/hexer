@@ -346,22 +346,3 @@ func TestSocialGraph(t *testing.T) {
 	})
 
 }
-
-/*
-	Op
-	C F G
-
-	bag.Ref(A, "follows", B)
-	bag.Ref(C, "follows", B)
-	bag.Ref(C, "follows", E)
-	bag.Ref(C, "relates", D)
-	bag.Ref(D, "relates", B)
-	bag.Ref(B, "follows", F)
-	bag.Ref(F, "follows", G)
-	bag.Ref(D, "relates", G)
-	bag.Ref(E, "follows", F)
-
-	bag.Add(B, "status", xsd.From("b"))
-	bag.Add(D, "status", xsd.From("d"))
-	bag.Add(G, "status", xsd.From("g"))
-*/

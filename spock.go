@@ -21,7 +21,7 @@ func (spock SPOCK) String() string {
 }
 
 func Link(s, p, o curie.IRI) SPOCK {
-	return SPOCK{S: s, P: p, O: xsd.AnyURI{Value: o}}
+	return SPOCK{S: s, P: p, O: xsd.AnyURI(o)}
 }
 
 func From[T xsd.DataType](s, p curie.IRI, o T) SPOCK {
@@ -31,7 +31,7 @@ func From[T xsd.DataType](s, p curie.IRI, o T) SPOCK {
 type Bag []SPOCK
 
 func (bag *Bag) Ref(s, p, o curie.IRI) {
-	*bag = append(*bag, SPOCK{S: s, P: p, O: xsd.AnyURI{Value: o}})
+	*bag = append(*bag, SPOCK{S: s, P: p, O: xsd.AnyURI(o)})
 }
 
 func (bag *Bag) Add(s, p curie.IRI, o xsd.Value) {

@@ -2,64 +2,87 @@ package xsd
 
 import (
 	"reflect"
-
-	"github.com/fogfish/curie"
+	"strings"
 )
+
+func HasPrefix(a, b Value) bool {
+	switch av := a.(type) {
+	case AnyURI:
+		if bv, ok := b.(AnyURI); ok {
+			return strings.HasPrefix(string(av), string(bv))
+		}
+
+		return false
+	case String:
+		if bv, ok := b.(String); ok {
+			return strings.HasPrefix(string(av), string(bv))
+		}
+
+		return false
+	}
+
+	return false
+}
 
 func Compare(a, b Value) int {
 	switch av := a.(type) {
 	case AnyURI:
 		if bv, ok := b.(AnyURI); ok {
-			return compare(av.Value, bv.Value)
-		} else {
-			return compare(reflect.Kind(1000), typeOf(b))
+			return compare(av, bv)
 		}
+
+		return compare(reflect.Kind(1000), typeOf(b))
 	case String:
 		if bv, ok := b.(String); ok {
-			return compare(av.Value, bv.Value)
-		} else {
-			return compare(reflect.String, typeOf(b))
+			return compare(av, bv)
 		}
+
+		return compare(reflect.String, typeOf(b))
 	}
 	return 0
 }
 
 func typeOf(x any) reflect.Kind {
 	switch x.(type) {
-	case string:
-		return reflect.String
-	case bool:
-		return reflect.Bool
-	case int:
-		return reflect.Int
-	case int8:
-		return reflect.Int8
-	case int16:
-		return reflect.Int16
-	case int32:
-		return reflect.Int32
-	case int64:
-		return reflect.Int64
-	case uint:
-		return reflect.Uint
-	case uint8:
-		return reflect.Uint8
-	case uint16:
-		return reflect.Uint16
-	case uint32:
-		return reflect.Uint32
-	case uint64:
-		return reflect.Uint64
-	case float32:
-		return reflect.Float32
-	case float64:
-		return reflect.Float64
-	case curie.IRI:
+	case AnyURI:
 		return reflect.Kind(1000)
-	case []byte:
-		return reflect.Kind(1001)
+	case String:
+		return reflect.String
+	// case string:
+	// 	return reflect.String
+	// case bool:
+	// 	return reflect.Bool
+	// case int:
+	// 	return reflect.Int
+	// case int8:
+	// 	return reflect.Int8
+	// case int16:
+	// 	return reflect.Int16
+	// case int32:
+	// 	return reflect.Int32
+	// case int64:
+	// 	return reflect.Int64
+	// case uint:
+	// 	return reflect.Uint
+	// case uint8:
+	// 	return reflect.Uint8
+	// case uint16:
+	// 	return reflect.Uint16
+	// case uint32:
+	// 	return reflect.Uint32
+	// case uint64:
+	// 	return reflect.Uint64
+	// case float32:
+	// 	return reflect.Float32
+	// case float64:
+	// 	return reflect.Float64
+	// case curie.IRI:
+	// 	return reflect.Kind(1000)
+	// case []byte:
+	// 	return reflect.Kind(1001)
 	default:
-		return reflect.Invalid
+		panic("not supported")
+		// return reflect.Invalid
 	}
 }
 

@@ -36,11 +36,11 @@ type Base64Binary = []byte
 func From[T DataType](value T) Value {
 	switch v := any(value).(type) {
 	case curie.IRI:
-		return AnyURI{Value: v}
+		return AnyURI(v)
 	case string:
-		return String{Value: v}
-	case int:
-		return Integer{Value: v}
+		return String(v)
+	// case int:
+	// 	return Integer{Value: v}
 	default:
 		panic("xxxx")
 	}

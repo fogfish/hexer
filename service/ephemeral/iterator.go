@@ -1,9 +1,82 @@
 package ephemeral
 
 import (
+	"strings"
+
+	"github.com/fogfish/curie"
 	"github.com/fogfish/hexer"
+	"github.com/fogfish/hexer/xsd"
 	"github.com/fogfish/skiplist"
 )
+
+// TODO: use xsd as primary type for indexes
+
+type Seq[K, V any] interface {
+	Head() (K, V)
+	Next() bool
+}
+
+func overIRI[A, B any](
+	pred *hexer.Predicate[curie.IRI],
+) func(list *skiplist.SkipList[curie.IRI, B]) Seq[A, B] {
+	return func(list *skiplist.SkipList[curie.IRI, B]) Seq[A, B] {
+		var seq Seq[curie.IRI, B]
+
+		switch {
+		case pred == nil:
+			seq = skiplist.Values(list)
+		case pred.Clause == hexer.EQ:
+			seq = skiplist.Slice(list, pred.Value, 1)
+		case pred.Clause == hexer.PQ:
+			_, after := skiplist.Split(list, pred.Value)
+			seq = after.TakeWhile(
+				func(x curie.IRI) bool {
+					return strings.HasPrefix(string(x), string(pred.Value))
+				},
+			)
+			// TODO: block after prefix exceeds
+		case pred.Clause == hexer.LT:
+			seq, _ = skiplist.Split(list, pred.Value)
+		case pred.Clause == hexer.GT:
+			_, seq = skiplist.Split(list, pred.Value)
+		case pred.Clause == hexer.IN:
+			seq = skiplist.Range(list, pred.Value, pred.Other)
+		}
+
+		return seq.(Seq[A, B])
+	}
+}
+
+func overXSD[A, B any](
+	pred *hexer.Predicate[xsd.Value],
+) func(list *skiplist.SkipList[xsd.Value, B]) Seq[A, B] {
+	return func(list *skiplist.SkipList[xsd.Value, B]) Seq[A, B] {
+		var seq Seq[xsd.Value, B]
+
+		switch {
+		case pred == nil:
+			seq = skiplist.Values(list)
+		case pred.Clause == hexer.EQ:
+			seq = skiplist.Slice(list, pred.Value, 1)
+		case pred.Clause == hexer.PQ:
+			_, after := skiplist.Split(list, pred.Value)
+			seq = after.TakeWhile(
+				func(x xsd.Value) bool {
+					return xsd.HasPrefix(x, pred.Value)
+				},
+			)
+			// TODO: block after prefix exceeds
+		case pred.Clause == hexer.LT:
+			seq, _ = skiplist.Split(list, pred.Value)
+		case pred.Clause == hexer.GT:
+			_, seq = skiplist.Split(list, pred.Value)
+		case pred.Clause == hexer.IN:
+			seq = skiplist.Range(list, pred.Value, pred.Other)
+		}
+
+		return seq.(Seq[A, B])
+	}
+}
 
 func toIterator[A, B any](
 	pred *hexer.Predicate[A],
@@ -14,6 +87,21 @@ func toIterator[A, B any](
 		return skiplist.Values(list)
 	case pred.Clause == hexer.EQ:
 		return skiplist.Slice(list, pred.Value, 1)
+	case pred.Clause == hexer.PQ:
+		switch v := any(pred.Value).(type) {
+		case curie.IRI:
+			_, after := skiplist.Split(list, pred.Value)
+			return after.TakeWhile(func(a A) bool {
+				if iri, ok := any(a).(curie.IRI); ok {
+					return strings.HasPrefix(string(iri), string(v))
+				}
+				return false
+			})
+		default:
+			panic("xxx")
+		}
+
+		// TODO: block after prefix exceeds
 	case pred.Clause == hexer.LT:
 		before, _ := skiplist.Split(list, pred.Value)
 		return before
@@ -28,18 +116,43 @@ func toIterator[A, B any](
 }
 
 type Iterator[A, B, C any] struct {
-	a   A
-	b   B
-	pb  *hexer.Predicate[B]
-	pc  *hexer.Predicate[C]
-	abc *skiplist.Iterator[A, *skiplist.SkipList[B, *skiplist.SkipList[C, k]]]
-	_bc *skiplist.Iterator[B, *skiplist.SkipList[C, k]]
-	__c *skiplist.Iterator[C, k]
+	a     A
+	b     B
+	pb    *hexer.Predicate[B]
+	pc    *hexer.Predicate[C]
+	abc   Seq[A, *skiplist.SkipList[B, *skiplist.SkipList[C, k]]]
+	_bc   Seq[B, *skiplist.SkipList[C, k]]
+	__c   Seq[C, k]
+	f     func(A, B, C) (hexer.SPOCK, bool)
+	spock hexer.SPOCK
+	hlp   Helper[A, B, C]
 }
 
-func (iter *Iterator[A, B, C]) Head() (A, B, C) {
-	c, _ := iter.__c.Head()
-	return iter.a, iter.b, c
+type Helper[A, B, C any] interface {
+	L1(*skiplist.SkipList[A, *skiplist.SkipList[B, *skiplist.SkipList[C, k]]]) Seq[A, *skiplist.SkipList[B, *skiplist.SkipList[C, k]]]
+	L2(*skiplist.SkipList[B, *skiplist.SkipList[C, k]]) Seq[B, *skiplist.SkipList[C, k]]
+	L3(*skiplist.SkipList[C, k]) Seq[C, k]
+}
+
+func NewIterator[A, B, C any](
+	hlp Helper[A, B, C],
+	seq *skiplist.SkipList[A, *skiplist.SkipList[B, *skiplist.SkipList[C, k]]],
+	// pa *hexer.Predicate[A],
+	// pb *hexer.Predicate[B],
+	// pc *hexer.Predicate[C],
+	f func(A, B, C) (hexer.SPOCK, bool),
+) *Iterator[A, B, C] {
+	return &Iterator[A, B, C]{
+		hlp: hlp,
+		abc: hlp.L1(seq), //toIterator(pa, seq),
+		// pb:  pb,
+		// pc:  pc,
+		f: f,
+	}
+}
+
+func (iter *Iterator[A, B, C]) Head() hexer.SPOCK {
+	return iter.spock
 }
 
 func (iter *Iterator[A, B, C]) Next() bool {
@@ -49,7 +162,7 @@ func (iter *Iterator[A, B, C]) Next() bool {
 		}
 		a, _bc := iter.abc.Head()
 		iter.a = a
-		iter._bc = toIterator(iter.pb, _bc)
+		iter._bc = iter.hlp.L2(_bc) // toIterator(iter.pb, _bc)
 	}
 
 	if iter.__c == nil {
@@ -60,7 +173,7 @@ func (iter *Iterator[A, B, C]) Next() bool {
 
 		b, __c := iter._bc.Head()
 		iter.b = b
-		iter.__c = toIterator(iter.pc, __c)
+		iter.__c = iter.hlp.L3(__c) // toIterator(iter.pc, __c)
 	}
 
 	if iter.__c == nil || !iter.__c.Next() {
@@ -68,7 +181,23 @@ func (iter *Iterator[A, B, C]) Next() bool {
 		return iter.Next()
 	}
 
+	c, _ := iter.__c.Head()
+	spock, has := iter.f(iter.a, iter.b, c)
+	if !has {
+		return false
+	}
+	iter.spock = spock
+
 	return true
+}
+
+func (iter *Iterator[A, B, C]) FMap(f func(hexer.SPOCK) error) error {
+	for iter.Next() {
+		if err := f(iter.Head()); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // type BiIterator[B, A any] struct {

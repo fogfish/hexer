@@ -141,21 +141,20 @@ func putS(store *Store, _os _os, _ps _ps, spock hexer.SPOCK) {
 }
 
 func Match(store *Store, q hexer.Query) hexer.Stream {
-	return store.streamSPO(q)
-	// switch q.Strategy {
-	// case hexer.STRATEGY_SPO:
-	// 	return store.streamSPO(q)
-	// // case hexer.STRATEGY_SOP:
-	// // 	return store.streamSOP(ctx, q)
-	// // case hexer.STRATEGY_PSO:
-	// // 	return store.streamPSO(ctx, q)
-	// // case hexer.STRATEGY_POS:
-	// // 	return store.streamPOS(ctx, q)
-	// // case hexer.STRATEGY_OSP:
-	// // 	return store.streamOSP(ctx, q)
-	// // case hexer.STRATEGY_OPS:
-	// // 	return store.streamOPS(ctx, q)
-	// default:
-	// 	panic("xxx")
-	// }
+	switch q.Strategy {
+	case hexer.STRATEGY_SPO:
+		return store.streamSPO(q)
+	case hexer.STRATEGY_SOP:
+		return store.streamSOP(q)
+	case hexer.STRATEGY_PSO:
+		return store.streamPSO(q)
+	case hexer.STRATEGY_POS:
+		return store.streamPOS(q)
+	case hexer.STRATEGY_OSP:
+		return store.streamOSP(q)
+	case hexer.STRATEGY_OPS:
+		return store.streamOPS(q)
+	default:
+		panic("xxx")
+	}
 }
