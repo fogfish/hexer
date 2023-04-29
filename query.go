@@ -1,6 +1,8 @@
 package hexer
 
 import (
+	"fmt"
+
 	"github.com/fogfish/curie"
 	"github.com/fogfish/hexer/xsd"
 )
@@ -114,6 +116,10 @@ func (q Pattern) String() string {
 	return "(___) ⇒ ∅"
 }
 
+func (q Pattern) Dump() string {
+	return fmt.Sprintf("⟪%s : s %s, p %s, o %s⟫", q.String(), q.S, q.P, q.O)
+}
+
 func Query(
 	s *Predicate[curie.IRI],
 	p *Predicate[curie.IRI],
@@ -210,7 +216,7 @@ func strategyForP(q Pattern) Strategy {
 		return STRATEGY_PSO
 	// #15: oxx ⇒ pos
 	case (q.HintForS == HINT_FILTER_PREFIX || q.HintForS == HINT_FILTER) && q.HintForO == HINT_MATCH:
-		return STRATEGY_PSO
+		return STRATEGY_POS
 	// #16: oxo ⇒ pso
 	case (q.HintForS == HINT_FILTER_PREFIX || q.HintForS == HINT_FILTER) && (q.HintForO == HINT_FILTER_PREFIX || q.HintForO == HINT_FILTER):
 		return STRATEGY_PSO

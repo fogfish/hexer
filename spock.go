@@ -2,6 +2,7 @@ package hexer
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/fogfish/curie"
 	"github.com/fogfish/guid/v2"
@@ -70,4 +71,75 @@ func (filter *filter) FMap(f func(SPOCK) error) error {
 
 func NewFilter(pred func(SPOCK) bool, stream Stream) Stream {
 	return &filter{pred: pred, stream: stream}
+}
+
+func NewFilterO(hint Hint, q *Predicate[xsd.Value], stream Stream) Stream {
+	switch hint {
+	case HINT_MATCH:
+		return NewFilter(
+			func(spock SPOCK) bool { return xsd.Compare(spock.O, q.Value) == 0 },
+			stream,
+		)
+	case HINT_FILTER_PREFIX:
+		return NewFilter(
+			func(spock SPOCK) bool { return xsd.HasPrefix(spock.O, q.Value) },
+			stream,
+		)
+	case HINT_FILTER:
+		switch q.Clause {
+		case LT:
+			return NewFilter(
+				func(spock SPOCK) bool { return xsd.Compare(spock.O, q.Value) == -1 },
+				stream,
+			)
+		case GT:
+			return NewFilter(
+				func(spock SPOCK) bool { return xsd.Compare(spock.O, q.Value) == 1 },
+				stream,
+			)
+		case IN:
+			return NewFilter(
+				func(spock SPOCK) bool {
+					return xsd.Compare(spock.O, q.Value) >= 0 && xsd.Compare(spock.O, q.Other) <= 0
+				},
+				stream,
+			)
+		}
+	}
+
+	return stream
+}
+
+func NewFilterP(hint Hint, q *Predicate[curie.IRI], stream Stream) Stream {
+	switch hint {
+	case HINT_MATCH:
+		return NewFilter(
+			func(spock SPOCK) bool { return spock.P == q.Value },
+			stream,
+		)
+	case HINT_FILTER_PREFIX:
+		return NewFilter(
+			func(spock SPOCK) bool { return strings.HasPrefix(string(spock.P), string(q.Value)) },
+			stream,
+		)
+	}
+
+	return stream
+}
+
+func NewFilterS(hint Hint, q *Predicate[curie.IRI], stream Stream) Stream {
+	switch hint {
+	case HINT_MATCH:
+		return NewFilter(
+			func(spock SPOCK) bool { return spock.S == q.Value },
+			stream,
+		)
+	case HINT_FILTER_PREFIX:
+		return NewFilter(
+			func(spock SPOCK) bool { return strings.HasPrefix(string(spock.S), string(q.Value)) },
+			stream,
+		)
+	}
+
+	return stream
 }

@@ -57,8 +57,10 @@ func TestSocialGraph(t *testing.T) {
 	Seq := func(t *testing.T, uid string, req hexer.Pattern) it.SeqOf[hexer.SPOCK] {
 		t.Helper()
 		bag := hexer.Bag{}
-		seq := ephemeral.Match(rds, req)
-		err := seq.FMap(bag.Join)
+		seq, err := ephemeral.Match(rds, req)
+		it.Then(t).Should(it.Nil(err))
+
+		err = seq.FMap(bag.Join)
 		it.Then(t).Should(
 			it.Nil(err),
 			it.Equal(req.String(), uid),
@@ -849,7 +851,7 @@ func TestSocialGraph(t *testing.T) {
 	//
 	// #22: (ˢᴾ) ⇒ o
 	//
-	t.Run("#21: (ˢᴾ) ⇒ o", func(t *testing.T) {
+	t.Run("#22: (ˢᴾ) ⇒ o", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(ˢᴾ) ⇒ o",
 				hexer.Query(hexer.IRI.HasPrefix("s:"), hexer.IRI.HasPrefix("f"), nil),
@@ -861,7 +863,7 @@ func TestSocialGraph(t *testing.T) {
 		)
 	})
 
-	t.Run("#21: (ˢᴾ) ⇒ o", func(t *testing.T) {
+	t.Run("#22: (ˢᴾ) ⇒ o", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(ˢᴾ) ⇒ o",
 				hexer.Query(hexer.IRI.HasPrefix("s:"), hexer.IRI.HasPrefix("n"), nil),
@@ -869,7 +871,7 @@ func TestSocialGraph(t *testing.T) {
 		)
 	})
 
-	t.Run("#21: (ˢᴾ) ⇒ o", func(t *testing.T) {
+	t.Run("#22: (ˢᴾ) ⇒ o", func(t *testing.T) {
 		it.Then(t).Should(
 			Seq(t, "(ˢᴾ) ⇒ o",
 				hexer.Query(hexer.IRI.HasPrefix("n:"), hexer.IRI.HasPrefix("f"), nil),

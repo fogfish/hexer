@@ -1,6 +1,8 @@
 package hexer
 
 import (
+	"fmt"
+
 	"github.com/fogfish/curie"
 	"github.com/fogfish/hexer/xsd"
 )
@@ -22,6 +24,23 @@ type Predicate[T any] struct {
 	Clause Clause
 	Value  T
 	Other  T
+}
+
+func (pred Predicate[T]) String() string {
+	switch pred.Clause {
+	case EQ:
+		return fmt.Sprintf("= %v", pred.Value)
+	case PQ:
+		return fmt.Sprintf("~ %v", pred.Value)
+	case LT:
+		return fmt.Sprintf("< %v", pred.Value)
+	case GT:
+		return fmt.Sprintf("> %v", pred.Value)
+	case IN:
+		return fmt.Sprintf("[%v, %v]", pred.Value, pred.Other)
+	default:
+		return ""
+	}
 }
 
 type iri string

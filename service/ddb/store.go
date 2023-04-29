@@ -95,7 +95,7 @@ func Put(ctx context.Context, store *Store, spock hexer.SPOCK) error {
 	return nil
 }
 
-func Match(ctx context.Context, store *Store, q hexer.Pattern) hexer.Stream {
+func Match(ctx context.Context, store *Store, q hexer.Pattern) (hexer.Stream, error) {
 	switch q.Strategy {
 	case hexer.STRATEGY_SPO:
 		return store.streamSPO(ctx, q)
