@@ -30,11 +30,15 @@ func queryIRI[A, B any](
 		seq = skiplist.Slice(list, pred.Value, 1)
 	case pred.Clause == hexer.PQ:
 		_, after := skiplist.Split(list, pred.Value)
-		seq = after.TakeWhile(
+		if after == nil {
+			return nil
+		}
+		return NewTakeWhile[curie.IRI, B](
 			func(x curie.IRI) bool {
 				return strings.HasPrefix(string(x), string(pred.Value))
 			},
-		)
+			after,
+		).(Seq[A, B])
 	case pred.Clause == hexer.LT:
 		seq, _ = skiplist.Split(list, pred.Value)
 	case pred.Clause == hexer.GT:
@@ -64,9 +68,13 @@ func queryXSD[A, B any](
 		seq = skiplist.Slice(list, pred.Value, 1)
 	case pred.Clause == hexer.PQ:
 		_, after := skiplist.Split(list, pred.Value)
-		seq = after.TakeWhile(
+		if after == nil {
+			return nil
+		}
+		return NewTakeWhile[xsd.Value, B](
 			func(x xsd.Value) bool { return xsd.HasPrefix(x, pred.Value) },
-		)
+			after,
+		).(Seq[A, B])
 	case pred.Clause == hexer.IN:
 		seq = skiplist.Range(list, pred.Value, pred.Other)
 	case pred.Clause == hexer.LT:
@@ -88,6 +96,27 @@ func queryXSD[A, B any](
 	}
 
 	return Seq[xsd.Value, B](seq).(Seq[A, B])
+}
+
+type takeWhile[A, B any] struct {
+	Seq[A, B]
+	f func(A) bool
+}
+
+func NewTakeWhile[A, B any](f func(A) bool, seq Seq[A, B]) Seq[A, B] {
+	return &takeWhile[A, B]{Seq: seq, f: f}
+}
+
+func (seq *takeWhile[A, B]) Next() bool {
+	if !seq.Seq.Next() {
+		return false
+	}
+
+	if key, _ := seq.Seq.Head(); !seq.f(key) {
+		return false
+	}
+
+	return true
 }
 
 // take sequence elements while xsd.Value belongs to same category (type)
