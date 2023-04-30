@@ -6,19 +6,18 @@
 // https://github.com/fogfish/hexagon
 //
 
-package hexagon
+package hexer
 
 import (
 	"math/rand"
 
 	"github.com/fogfish/curie"
 	"github.com/fogfish/guid"
-	"github.com/fogfish/hexagon/internal/ord"
+	"github.com/fogfish/hexer/internal/ord"
 	"github.com/fogfish/skiplist"
 )
 
 /*
-
 DataType is a type constrain used by the library.
 See https://www.w3.org/TR/xmlschema-2/#datatype
 
@@ -59,11 +58,10 @@ The value is the IEEE 754 double-precision 64-bit floating point type.
 
 xsd:boolean ⇒ bool
 
-The value is either true or false, representing a logic values
+# The value is either true or false, representing a logic values
 
 xsd:hexBinary ⇒ []byte
 xsd:base64Binary ⇒ []byte
-
 */
 type DataType interface {
 	~string |
@@ -75,7 +73,6 @@ type DataType interface {
 }
 
 /*
-
 Stream of <s,p,o> triples fetched from the store
 */
 type Stream interface {
@@ -85,14 +82,12 @@ type Stream interface {
 }
 
 /*
-
 Entity is a folded Stream of <p,o> components
 
-	entity := hexagon.Entity{}
-  hexagon.
-    Match(store, hexagon.IRI.Eq("s"), nil, nil).
-	  FMap(entity.Append)
-
+		entity := hexagon.Entity{}
+	  hexagon.
+	    Match(store, hexagon.IRI.Eq("s"), nil, nil).
+		  FMap(entity.Append)
 */
 type Entity map[curie.IRI]any
 
@@ -111,14 +106,12 @@ func (node Entity) Append(s, p curie.IRI, o any) error {
 }
 
 /*
-
 Graph is a folded Stream of <s,p,o> components
 
-	graph := hexagon.Graph{}
-  hexagon.
-    Match(store, nil, nil, hexagon.Eq("o")).
-	  FMap(graph.Append)
-
+		graph := hexagon.Graph{}
+	  hexagon.
+	    Match(store, nil, nil, hexagon.Eq("o")).
+		  FMap(graph.Append)
 */
 type Graph map[curie.IRI]Entity
 
@@ -140,11 +133,12 @@ func (graph Graph) Append(s, p curie.IRI, o any) error {
 //
 //
 
-// components of <s,p,o,k> triple
-type s = curie.IRI
-type p = curie.IRI
-type o = any
-type k = guid.LID
+// components of <s,p,o,c,k> triple
+type s = curie.IRI // subject
+type p = curie.IRI // predicate
+type o = any       // object
+type c = float64   // credibility
+type k = guid.LID  // k-order
 
 // index types for 3rd faction
 type __s = *skiplist.SkipList[s, k]

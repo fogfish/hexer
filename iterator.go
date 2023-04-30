@@ -6,7 +6,7 @@
 // https://github.com/fogfish/hexagon
 //
 
-package hexagon
+package hexer
 
 import (
 	"github.com/fogfish/curie"
@@ -14,7 +14,6 @@ import (
 )
 
 /*
-
 iterator build stream of <s,p,o> iterating over single dimension
 
 the pointer `a` holds address of the field s, p, o, depending on the config
@@ -46,7 +45,6 @@ func (iter *iterator[T]) FMap(f func(curie.IRI, curie.IRI, any) error) error {
 }
 
 /*
-
 iterator2 build stream of <s,p,o> iterating over two dimension
 */
 type iterator2[B, A any] struct {
@@ -93,7 +91,6 @@ func (iter *iterator2[A, B]) FMap(f func(curie.IRI, curie.IRI, any) error) error
 }
 
 /*
-
 iterator3 build stream of <s,p,o> iterating over three dimension
 */
 type iterator3 struct {

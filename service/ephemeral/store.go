@@ -1,19 +1,13 @@
-//
-// Copyright (C) 2022 Dmitry Kolesnikov
-//
-// This file may be modified and distributed under the terms
-// of the MIT license.  See the LICENSE file for details.
-// https://github.com/fogfish/hexagon
-//
-
-package hexer
+package ephemeral
 
 import (
 	"math/rand"
 	"time"
 
 	"github.com/fogfish/curie"
-	"github.com/fogfish/guid"
+	"github.com/fogfish/guid/v2"
+	"github.com/fogfish/hexer"
+	"github.com/fogfish/hexer/xsd"
 	"github.com/fogfish/skiplist"
 )
 
@@ -48,16 +42,23 @@ func Size(store *Store) int {
 	return store.size
 }
 
-// Put new knowledge statement into the store
-func Put[T DataType](store *Store, s, p curie.IRI, o T) {
-	k := guid.L.K(guid.Clock)
-	_po, _op := ensureForS(store, s)
-	_so, _os := ensureForP(store, p)
-	_sp, _ps := ensureForO(store, o)
+func Add(store *Store, bag hexer.Bag) {
+	for _, spock := range bag {
+		Put(store, spock)
+	}
+}
 
-	putO(store, _po, _so, s, p, o, k)
-	putP(store, _op, _sp, s, p, o, k)
-	putS(store, _os, _ps, s, p, o, k)
+func Put(store *Store, spock hexer.SPOCK) {
+	spock.K = guid.L(guid.Clock)
+
+	_po, _op := ensureForS(store, spock.S)
+	_so, _os := ensureForP(store, spock.P)
+	_sp, _ps := ensureForO(store, spock.O)
+
+	putO(store, _po, _so, spock)
+	putP(store, _op, _sp, spock)
+	putS(store, _os, _ps, spock)
+
 	store.size++
 }
 
@@ -91,7 +92,7 @@ func ensureForP(store *Store, p curie.IRI) (_so, _os) {
 	return _so, _os
 }
 
-func ensureForO(store *Store, o any) (_sp, _ps) {
+func ensureForO(store *Store, o xsd.Value) (_sp, _ps) {
 	_sp, has := skiplist.Lookup(store.osp, o)
 	if !has {
 		_sp = newSP(store.random)
@@ -106,40 +107,54 @@ func ensureForO(store *Store, o any) (_sp, _ps) {
 	return _sp, _ps
 }
 
-func putO(store *Store, _po _po, _so _so, s s, p p, o o, k k) {
-	__o, has := skiplist.Lookup(_po, p)
+func putO(store *Store, _po _po, _so _so, spock hexer.SPOCK) {
+	__o, has := skiplist.Lookup(_po, spock.P)
 	if !has {
 		__o = newO(store.random)
-		skiplist.Put(_po, p, __o)
-		skiplist.Put(_so, s, __o)
+		skiplist.Put(_po, spock.P, __o)
+		skiplist.Put(_so, spock.S, __o)
 	}
 
-	skiplist.Put(__o, o, k)
+	skiplist.Put(__o, spock.O, spock.K)
 }
 
-func putP(store *Store, _op _op, _sp _sp, s s, p p, o o, k k) {
-	__p, has := skiplist.Lookup(_sp, s)
+func putP(store *Store, _op _op, _sp _sp, spock hexer.SPOCK) {
+	__p, has := skiplist.Lookup(_sp, spock.S)
 	if !has {
 		__p = newP(store.random)
-		skiplist.Put(_op, o, __p)
-		skiplist.Put(_sp, s, __p)
+		skiplist.Put(_op, spock.O, __p)
+		skiplist.Put(_sp, spock.S, __p)
 	}
-	skiplist.Put(__p, p, k)
+
+	skiplist.Put(__p, spock.P, spock.K)
 }
 
-func putS(store *Store, _os _os, _ps _ps, s s, p p, o o, k k) {
-	__s, has := skiplist.Lookup(_ps, p)
+func putS(store *Store, _os _os, _ps _ps, spock hexer.SPOCK) {
+	__s, has := skiplist.Lookup(_ps, spock.P)
 	if !has {
 		__s = newS(store.random)
-		skiplist.Put(_os, o, __s)
-		skiplist.Put(_ps, p, __s)
+		skiplist.Put(_os, spock.O, __s)
+		skiplist.Put(_ps, spock.P, __s)
 	}
-	skiplist.Put(__s, s, k)
+
+	skiplist.Put(__s, spock.S, spock.K)
 }
 
-// Match knowledge statements to the pattern and return stream of knowledge statements
-func Match(store *Store, s *Predicate[s], p *Predicate[p], o *Predicate[o]) Stream {
-	q := pattern{store: store, s: s, p: p, o: o}
-	_, iter := q.eval()
-	return iter
+func Match(store *Store, q hexer.Pattern) (hexer.Stream, error) {
+	switch q.Strategy {
+	case hexer.STRATEGY_SPO:
+		return store.streamSPO(q)
+	case hexer.STRATEGY_SOP:
+		return store.streamSOP(q)
+	case hexer.STRATEGY_PSO:
+		return store.streamPSO(q)
+	case hexer.STRATEGY_POS:
+		return store.streamPOS(q)
+	case hexer.STRATEGY_OSP:
+		return store.streamOSP(q)
+	case hexer.STRATEGY_OPS:
+		return store.streamOPS(q)
+	default:
+		panic("xxx")
+	}
 }

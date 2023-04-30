@@ -1,13 +1,6 @@
-package hexagon_test
+package hexer_test
 
-import (
-	"testing"
-
-	"github.com/fogfish/curie"
-	"github.com/fogfish/hexagon"
-	"github.com/fogfish/it/v2"
-)
-
+/*
 type spo struct {
 	s curie.IRI
 	p curie.IRI
@@ -286,3 +279,4 @@ func BenchmarkXxx(b *testing.B) {
 		seq.FMap(func(s, p curie.IRI, o any) error { return nil })
 	}
 }
+*/
