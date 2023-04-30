@@ -4,7 +4,7 @@
 // go test -tags=it
 //
 
-package ddb_test
+package dynamo_test
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 
 	"github.com/fogfish/curie"
 	"github.com/fogfish/hexer"
-	"github.com/fogfish/hexer/service/ddb"
+	"github.com/fogfish/hexer/service/dynamo"
 	"github.com/fogfish/it/v2"
 )
 
@@ -47,14 +47,14 @@ func datasetSocialGraph() hexer.Bag {
 	}
 }
 
-func setup(bag hexer.Bag) *ddb.Store {
-	store, err := ddb.New("ddb:///thingdb-latest")
+func setup(bag hexer.Bag) *dynamo.Store {
+	store, err := dynamo.New("ddb:///thingdb-latest")
 	if err != nil {
 		panic(err)
 	}
 
 	t := time.Now()
-	_, err = ddb.Add(context.Background(), store, bag)
+	_, err = dynamo.Add(context.Background(), store, bag)
 	if err != nil {
 		panic(err)
 	}
@@ -69,7 +69,7 @@ func TestSocialGraph(t *testing.T) {
 	Seq := func(t *testing.T, uid string, req hexer.Pattern) it.SeqOf[hexer.SPOCK] {
 		t.Helper()
 		bag := hexer.Bag{}
-		seq, err := ddb.Match(context.Background(), rds, req)
+		seq, err := dynamo.Match(context.Background(), rds, req)
 
 		it.Then(t).Should(
 			it.Nil(err),
@@ -87,7 +87,7 @@ func TestSocialGraph(t *testing.T) {
 
 		it.Then(t).Should(
 			it.Error(
-				ddb.Match(context.Background(), rds, req),
+				dynamo.Match(context.Background(), rds, req),
 			).With(&err),
 		)
 
