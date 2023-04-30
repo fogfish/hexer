@@ -11,68 +11,48 @@ package json
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 
 	"github.com/fogfish/curie"
-	"github.com/fogfish/guid"
-	"github.com/fogfish/hexagon"
+	"github.com/fogfish/guid/v2"
+	"github.com/fogfish/hexer"
 )
 
-type Node = map[string]any
+type Bag hexer.Bag
 
-// Unmarshal JSON into the store
-func Unmarshal(data []byte, store *hexagon.Store) error {
-	var bag any
+func (bag *Bag) UnmarshalJSON(b []byte) error {
+	var raw any
 
-	if err := json.Unmarshal(data, &bag); err != nil {
+	if err := json.Unmarshal(b, &raw); err != nil {
 		return err
 	}
 
-	switch val := bag.(type) {
+	switch val := raw.(type) {
 	case []any:
-		return decodeArray(store, nil, nil, val)
-	case Node:
-		return decodeObject(store, nil, nil, val)
+		return decodeArray(bag, nil, nil, val)
+	case map[string]any:
+		return decodeObject(bag, nil, nil, val)
 	default:
 		return fmt.Errorf("json codec do not support %T (%v)", val, val)
 	}
 }
 
-// Decode JSON into the store
-func Decode(reader io.Reader, store *hexagon.Store) error {
-	var bag any
-
-	if err := json.NewDecoder(reader).Decode(&bag); err != nil {
-		return err
-	}
-
-	switch val := bag.(type) {
-	case []any:
-		return decodeArray(store, nil, nil, val)
-	case Node:
-		return decodeObject(store, nil, nil, val)
-	default:
-		return fmt.Errorf("json codec do not support %T (%v)", val, val)
-	}
-}
-
-func decodeArray(store *hexagon.Store, s, p *curie.IRI, seq []any) error {
+func decodeArray(bag *Bag, s, p *curie.IRI, seq []any) error {
 	for _, val := range seq {
 		switch o := val.(type) {
 		case float64:
 			if s != nil && p != nil {
-				hexagon.Put(store, *s, *p, o)
+				*bag = append(*bag, hexer.From(*s, *p, o))
 			}
 		case string:
 			if s != nil && p != nil {
-				hexagon.Put(store, *s, *p, o)
+				*bag = append(*bag, hexer.From(*s, *p, o))
 			}
 		case bool:
 			if s != nil && p != nil {
-				hexagon.Put(store, *s, *p, o)
+				*bag = append(*bag, hexer.From(*s, *p, o))
 			}
-		case Node:
-			decodeObject(store, s, p, o)
+		case map[string]any:
+			decodeObject(bag, s, p, o)
 		default:
 			return fmt.Errorf("json array codec do not support %T (%v)", val, val)
 		}
@@ -80,20 +60,20 @@ func decodeArray(store *hexagon.Store, s, p *curie.IRI, seq []any) error {
 	return nil
 }
 
-func decodeObject(store *hexagon.Store, s, p *curie.IRI, obj Node) error {
+func decodeObject(bag *Bag, s, p *curie.IRI, obj map[string]any) error {
 	id, has := decodeObjectID(obj)
 	if !has {
-		id = curie.New("_:%s", guid.L.K(guid.Clock))
+		id = curie.New("_:%s", guid.L(guid.Clock))
 	}
 
 	if s != nil && p != nil {
-		hexagon.Put(store, *s, *p, id)
+		*bag = append(*bag, hexer.From(*s, *p, id))
 	}
 
-	return decodeObjectProperties(store, id, obj)
+	return decodeObjectProperties(bag, id, obj)
 }
 
-func decodeObjectID(obj Node) (curie.IRI, bool) {
+func decodeObjectID(obj map[string]any) (curie.IRI, bool) {
 	raw, has := obj["@id"]
 	if !has {
 		raw, has = obj["id"]
@@ -110,7 +90,7 @@ func decodeObjectID(obj Node) (curie.IRI, bool) {
 	return curie.IRI(id), true
 }
 
-func decodeObjectProperties(store *hexagon.Store, s curie.IRI, obj Node) error {
+func decodeObjectProperties(bag *Bag, s curie.IRI, obj map[string]any) error {
 	for key, val := range obj {
 		if key == "@id" || key == "id" {
 			continue
@@ -119,17 +99,17 @@ func decodeObjectProperties(store *hexagon.Store, s curie.IRI, obj Node) error {
 
 		switch o := val.(type) {
 		case float64:
-			hexagon.Put(store, s, p, o)
+			*bag = append(*bag, hexer.From(s, p, o))
 		case string:
-			hexagon.Put(store, s, p, o)
+			*bag = append(*bag, hexer.From(s, p, o))
 		case bool:
-			hexagon.Put(store, s, p, o)
-		case Node:
-			if err := decodeObject(store, &s, &p, o); err != nil {
+			*bag = append(*bag, hexer.From(s, p, o))
+		case map[string]any:
+			if err := decodeObject(bag, &s, &p, o); err != nil {
 				return err
 			}
 		case []any:
-			if err := decodeArray(store, &s, &p, o); err != nil {
+			if err := decodeArray(bag, &s, &p, o); err != nil {
 				return err
 			}
 		default:
